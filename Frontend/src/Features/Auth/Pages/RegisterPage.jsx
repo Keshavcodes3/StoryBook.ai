@@ -7,7 +7,7 @@ import AuthLayout from '../Components/AuthLayout';
 import AuthInput from '../Components/AuthInput';
 import AuthButton from '../Components/AuthButton';
 import authService from '../Service/authService';
-
+import { useAuth } from '../Hooks/useAuth'
 const avatars = [
   "https://i.pinimg.com/736x/28/2c/67/282c6790658e5be6688d4e7670085fc1.jpg",
   "https://i.pinimg.com/736x/0c/08/fd/0c08fda0bf680a8979d7527eedc34e52.jpg",
@@ -21,6 +21,7 @@ const avatars = [
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const { registerUser } = useAuth()
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     username: '',
@@ -74,9 +75,11 @@ const RegisterPage = () => {
     setError('');
 
     try {
-      const response = await authService.register(formData);
+      const response = await registerUser(formData);
       if (response.success) {
         navigate('/login');
+      } else {
+        setError(response.error || 'Registration failed. Please try again.');
       }
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');

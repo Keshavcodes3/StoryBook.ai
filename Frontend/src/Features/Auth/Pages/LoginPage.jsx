@@ -6,8 +6,10 @@ import AuthLayout from '../Components/AuthLayout';
 import AuthInput from '../Components/AuthInput';
 import AuthButton from '../Components/AuthButton';
 import authService from '../Service/authService';
+import { useAuth } from '../Hooks/useAuth';
 
 const LoginPage = () => {
+  const { loginUser } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -27,9 +29,11 @@ const LoginPage = () => {
     setError('');
 
     try {
-      const response = await authService.login(formData);
+      const response = await loginUser(formData);
       if (response.success) {
         navigate('/dashboard'); // or wherever the home is
+      } else {
+        setError(response.error || 'Login failed. Please check your credentials.');
       }
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
