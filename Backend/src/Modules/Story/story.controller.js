@@ -49,6 +49,9 @@ export const createNewContent = async (req, res) => {
             await userModel.findByIdAndUpdate(userId, {
                 $inc: { generationCredits: -2 }
             })
+            await userModel.findByIdAndUpdate(userId, {
+                $inc: { totalStoriesWritten: +1 }
+            })
 
         }
         else {
@@ -70,6 +73,9 @@ export const createNewContent = async (req, res) => {
             const userId = user._id
             await userModel.findByIdAndUpdate(userId, {
                 $inc: { generationCredits: -5 }
+            })
+            await userModel.findByIdAndUpdate(userId, {
+                $inc: { totalPoems: +1 }
             })
         }
 

@@ -2,6 +2,8 @@ import sendResponse from '../../Common/sendResponse.js';
 import userModel from './user.model.js';
 import jwt from 'jsonwebtoken';
 import userUtils from './user.utils.js';
+import sotryModel from '../Story/story.model.js';
+import poemCreationModel from '../Poem/poem.model.js';
 
 /**
  * @desc    Register a new user for storybook.ai
@@ -9,76 +11,76 @@ import userUtils from './user.utils.js';
  * @access  Public
  */
 export const registerUser = async (req, res) => {
-    try {
-        const { username, email, password, avatar } = req.body;
+  try {
+    const { username, email, password, avatar } = req.body;
 
-        if (!username || !email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: 'Please provide a username, email, and password.',
-            });
-        }
-
-
-        const existingUser = await userModel.findOne({
-            $or: [{ email: email.toLowerCase() }, { username }],
-        });
-
-        if (existingUser) {
-            const conflictField = existingUser.email === email.toLowerCase() ? 'Email' : 'Username';
-            return sendResponse.sendErrorResponse({
-                res,
-                statusCode: 403,
-                message: `${conflictField} is already registered.`,
-                errorMessage: "User already exist with email"
-            })
-        }
-
-        const newUser = await userModel.create({
-            username,
-            email,
-            password,
-            avatar: avatar || '',
-        });
-
-        const token = userUtils.generateToken({ id: newUser._id, tier: newUser.tier })
-
-        const cookieOptions = {
-            expires: new Date(
-                Date.now() + (parseInt(process.env.COOKIE_EXPIRE) || 7) * 24 * 60 * 60 * 1000
-            ),
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', 
-            sameSite: 'strict', 
-        };
-
-      
-        return res
-            .status(201)
-            .cookie('token', token, cookieOptions)
-            .json({
-                success: true,
-                message: 'Account created successfully!',
-                user: newUser,
-            });
-
-    } catch (error) {
-        console.error('Registration Error:', error);
-
-       
-        if (error.name === 'ValidationError') {
-            const validationMessages = Object.values(error.errors).map((err) => err.message);
-            return res.status(400).json({
-                success: false,
-                message: validationMessages[0], 
-            });
-        }
-
-        return res.status(500).json({
-            success: false,
-            message: 'Server error encountered during registration. Please try again later.',
-        });
+    if (!username || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a username, email, and password.',
+      });
     }
+
+
+    const existingUser = await userModel.findOne({
+      $or: [{ email: email.toLowerCase() }, { username }],
+    });
+
+    if (existingUser) {
+      const conflictField = existingUser.email === email.toLowerCase() ? 'Email' : 'Username';
+      return sendResponse.sendErrorResponse({
+        res,
+        statusCode: 403,
+        message: `${conflictField} is already registered.`,
+        errorMessage: "User already exist with email"
+      })
+    }
+
+    const newUser = await userModel.create({
+      username,
+      email,
+      password,
+      avatar: avatar || '',
+    });
+
+    const token = userUtils.generateToken({ id: newUser._id, tier: newUser.tier })
+
+    const cookieOptions = {
+      expires: new Date(
+        Date.now() + (parseInt(process.env.COOKIE_EXPIRE) || 7) * 24 * 60 * 60 * 1000
+      ),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    };
+
+
+    return res
+      .status(201)
+      .cookie('token', token, cookieOptions)
+      .json({
+        success: true,
+        message: 'Account created successfully!',
+        user: newUser,
+      });
+
+  } catch (error) {
+    console.error('Registration Error:', error);
+
+
+    if (error.name === 'ValidationError') {
+      const validationMessages = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({
+        success: false,
+        message: validationMessages[0],
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Server error encountered during registration. Please try again later.',
+    });
+  }
 };
 
 
@@ -109,9 +111,9 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    
+
     const isMatch = await user.comparePassword(password);
-    
+
     if (!isMatch) {
       return res.status(401).json({
         success: false,
@@ -119,14 +121,14 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    
+
     const token = jwt.sign(
       { id: user._id, tier: user.tier },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
 
-   
+
     const cookieOptions = {
       expires: new Date(
         Date.now() + (parseInt(process.env.COOKIE_EXPIRE) || 7) * 24 * 60 * 60 * 1000
@@ -169,12 +171,12 @@ export const getMe = async (req, res) => {
       });
     }
 
-   
+
     return res.status(200).json({
       success: true,
       user: req.user,
     });
-    
+
   } catch (error) {
     console.error('GetMe Controller Error:', error);
     return res.status(500).json({
@@ -184,3 +186,42 @@ export const getMe = async (req, res) => {
   }
 };
 
+
+export const getRecentWorks = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [recentStories, recentPoems] = await Promise.all([
+      sotryModel.find({ userId }).sort({ createdAt: -1 }).limit(3).lean(),
+      poemCreationModel.find({ userId }).sort({ createdAt: -1 }).limit(3).lean()
+    ]);
+
+    const formattedStories = recentStories.map(story => ({
+      title: story.title,
+      type: "Story",
+      createdAt: story.createdAt
+    }));
+
+    const formattedPoems = recentPoems.map(poem => ({
+      title: poem.title,
+      type: "Poem",
+      createdAt: poem.createdAt
+    }));
+
+    const recentWorks = [...formattedStories, ...formattedPoems]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 3);
+
+    return res.status(200).json({
+      success: true,
+      data: recentWorks
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+      error: err?.message
+    });
+  }
+};

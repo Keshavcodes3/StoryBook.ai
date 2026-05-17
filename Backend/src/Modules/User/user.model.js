@@ -34,11 +34,24 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: '',
         },
-
+        Streak: {
+            type: Number,
+            default: 0,
+            select: false
+        },
+        totalPoems: {
+            type: Number,
+            default: 0,
+        },
+        totalStoriesWritten: {
+            type: Number,
+            default: 0,
+        },
         tier: {
             type: String,
             enum: ['free', 'premium'],
             default: 'free',
+            select: false
         },
         generationCredits: {
             type: Number,
