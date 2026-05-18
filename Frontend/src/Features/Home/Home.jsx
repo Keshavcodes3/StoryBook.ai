@@ -1,18 +1,21 @@
 import React from 'react';
 import Navbar from './Components/Navbar';
 import HeroSection from './Components/HeroSection';
-import AboutPlatform from './Components/AboutPlatform';
+import FeaturesBanner from './Components/FeaturesBanner';
 
 const Home = () => {
     return (
-        <div className="min-h-screen bg-[#0B0A11] font-sans selection:bg-[#FF6A00]/30 selection:text-white overflow-hidden relative">
-            <Navbar />
-            <main>
+        <div className="min-h-screen bg-[#FAFAFE] font-sans text-[#110E2C] overflow-hidden relative flex flex-col justify-between">
+            {/* Background Decorative Gradients */}
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-400/10 blur-[120px] rounded-full pointer-events-none" />
+            <div className="absolute top-[20%] right-[-10%] w-[30%] h-[30%] bg-fuchsia-400/10 blur-[120px] rounded-full pointer-events-none" />
+
+            <div>
+                <Navbar />
                 <HeroSection />
-                <div className="container mx-auto px-6">
-                    <AboutPlatform />
-                </div>
-            </main>
+            </div>
+            
+            <FeaturesBanner />
         </div>
     );
 };

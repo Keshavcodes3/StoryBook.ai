@@ -20,6 +20,7 @@
     "react-redux": "^9.3.0",
     "react-router-dom": "^7.15.1",
     "redux": "^5.0.1",
+    "styled-components": "^6.4.1",
     "tailwindcss": "^4.3.0"
   },
   "devDependencies": {

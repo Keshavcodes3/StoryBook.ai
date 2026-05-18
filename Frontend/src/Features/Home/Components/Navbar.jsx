@@ -1,39 +1,42 @@
-/* eslint-disable no-unused-vars */
 import React from 'react';
+import { Feather, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Feather } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 const Navbar = () => {
-  return (
-    <motion.nav
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6 }}
-      className="fixed w-full top-0 z-50 bg-[#0B0A11]/80 backdrop-blur-md border-b border-white/5 px-7"
-    >
-      <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
-          <Feather className="text-violet-500 w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-          <span className="font-bold text-xl tracking-tight text-white">StoryBook.ai</span>
-        </Link>
+    const navLinks = ['Features', 'Tools', 'Pricing', 'Community', 'Blog'];
 
+    return (
+        <nav className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between relative z-50">
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-violet-500/20">
+                    <Feather className="w-5 h-5" />
+                </div>
+                <span className="font-extrabold text-xl tracking-tight text-[#110E2C]">
+                    StoryBook<span className="text-violet-500">.ai</span>
+                </span>
+            </Link>
 
+            {/* Desktop Links */}
+            <div className="hidden lg:flex items-center gap-8">
+                {navLinks.map((link) => (
+                    <Link key={link} to={`/${link.toLowerCase()}`} className="text-sm font-medium text-[#6E6B85] hover:text-[#110E2C] transition-colors">
+                        {link}
+                    </Link>
+                ))}
+            </div>
 
-        <div className="flex items-center gap-6">
-          <Link to="/login" className="text-sm font-medium text-white/60 hover:text-white transition-colors duration-300">
-            Login
-          </Link>
-          <Link
-            to="/register"
-            className="text-sm font-medium bg-violet-600 hover:bg-violet-700 text-white px-6 py-2.5 rounded-full transition-all duration-300 shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:scale-[1.02]"
-          >
-            Get Started
-          </Link>
-        </div>
-      </div>
-    </motion.nav>
-  );
+            {/* Actions */}
+            <div className="flex items-center gap-6">
+                <Link to="/login" className="text-sm font-semibold text-[#110E2C] hover:text-violet-600 transition-colors hidden sm:block">
+                    Login
+                </Link>
+                <Link to="/register" className="flex items-center gap-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:shadow-lg hover:shadow-violet-500/25 transition-all hover:-translate-y-0.5">
+                    Get Started <Sparkles className="w-4 h-4" />
+                </Link>
+            </div>
+        </nav>
+    );
 };
 
 export default Navbar;

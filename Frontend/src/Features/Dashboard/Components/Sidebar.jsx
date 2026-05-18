@@ -1,29 +1,35 @@
 /* eslint-disable no-unused-vars */
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Home, PenTool, BookOpen, BarChart2,
     Users, Compass, Settings, Feather, ChevronLeft
 } from 'lucide-react';
 
 const Sidebar = ({ activeTab = 'Home', onTabChange, isCollapsed, setIsCollapsed }) => {
+    const location = useLocation();
+    const navigate = useNavigate();
+
     const menuItems = [
-        { name: 'Home', icon: Home },
-        { name: 'Write', icon: PenTool },
-        { name: 'Library', icon: BookOpen },
-        { name: 'Analytics', icon: BarChart2 },
-        { name: 'Community', icon: Users },
-        { name: 'AI Muse', icon: Compass },
-        { name: 'Settings', icon: Settings },
+        { name: 'Home', icon: Home, path: '/dashboard' },
+        { name: 'Write', icon: PenTool, path: '/choose' },
+        { name: 'Library', icon: BookOpen, path: '/library' },
+        { name: 'Analytics', icon: BarChart2, path: '/analytics' },
+        { name: 'Community', icon: Users, path: '/community' },
+        { name: 'AI Muse', icon: Compass, path: '/muse' },
+        { name: 'Settings', icon: Settings, path: '/settings' },
     ];
+
+    // Auto-detect active tab based on current path if activeTab prop isn't strictly overriding it
+    const currentActive = menuItems.find(item => item.path === location.pathname)?.name || activeTab;
 
     return (
         <motion.aside
             animate={{ width: isCollapsed ? 80 : 256 }}
             transition={{ type: "spring", stiffness: 220, damping: 26 }}
-            className="h-screen fixed left-0 top-0 bg-[#F9F8FC] border-r border-purple-100/60 flex flex-col p-4 z-30 select-none will-change-[width]"
+            className="h-screen fixed left-0 top-0 bg-[#F9F8FC] border-r border-purple-100/60 flex flex-col p-4 z-50 select-none will-change-[width]"
         >
-            {/* HEADER BLOCK */}
             <div className={`flex items-center mb-10 h-10 relative ${isCollapsed ? 'justify-center' : 'justify-between px-2'}`}>
                 <AnimatePresence mode="wait">
                     {!isCollapsed && (
@@ -66,12 +72,19 @@ const Sidebar = ({ activeTab = 'Home', onTabChange, isCollapsed, setIsCollapsed 
             <nav className="flex-1 space-y-1 relative">
                 {menuItems.map((item) => {
                     const Icon = item.icon;
-                    const isActive = item.name === activeTab;
+                    const isActive = item.name === currentActive;
 
                     return (
                         <button
                             key={item.name}
-                            onClick={() => onTabChange && onTabChange(item.name)}
+                            onClick={() => {
+                                if (item.path) {
+                                    navigate(item.path);
+                                }
+                                if (onTabChange) {
+                                    onTabChange(item.name);
+                                }
+                            }}
                             className={`w-full flex items-center rounded-xl text-sm font-medium tracking-wide relative py-3 px-4 transition-colors duration-200 group cursor-pointer ${isActive ? 'text-violet-600' : 'text-[#6E6B85] hover:text-[#110E2C]'
                                 } ${isCollapsed ? 'justify-center' : 'gap-3.5'}`}
                         >
