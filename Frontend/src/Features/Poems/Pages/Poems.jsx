@@ -1,8 +1,8 @@
 import React from 'react';
 import CreationWorkspace from '../../Choose/Components/CreationWorkspace';
 
-const Stories = () => {
-    return <CreationWorkspace expectedFormat="story" />;
+const Poems = () => {
+    return <CreationWorkspace expectedFormat="poetry" />;
 };
 
-export default Stories;
+export default Poems;

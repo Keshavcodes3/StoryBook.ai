@@ -13,6 +13,8 @@ import Tools from '../Features/Marketing/Pages/Tools';
 import Pricing from '../Features/Marketing/Pages/Pricing';
 import Community from '../Features/Marketing/Pages/Community';
 import Blog from '../Features/Marketing/Pages/Blog';
+import Stories from '../Features/Stories/Pages/Stories';
+import Poems from '../Features/Poems/Pages/Poems';
 
 export const appRouter = createBrowserRouter([
   {
@@ -46,6 +48,14 @@ export const appRouter = createBrowserRouter([
       {
         path: '/library',
         element: <Library />
+      },
+      {
+        path: '/story',
+        element: <Stories />
+      },
+      {
+        path: '/poem',
+        element: <Poems />
       }
     ]
   }
