@@ -6,7 +6,7 @@ const creationSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
             required: [true, 'A creation must belong to a registered user.'],
-            index: true, // Speeds up queries when loading a specific user's history log
+            index: true, 
         },
         title: {
             type: String,
