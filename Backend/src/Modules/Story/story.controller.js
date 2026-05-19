@@ -81,8 +81,10 @@ export const createNewContent = async (req, res) => {
 
         return res.status(201).json({
             message: "Story created successfully",
+            success: true,
             succes: true,
-            response: response
+            response: response,
+            data: creation
         })
 
 
