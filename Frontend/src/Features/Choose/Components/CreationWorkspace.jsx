@@ -257,8 +257,8 @@ const CreationWorkspace = ({ expectedFormat }) => {
             <button
               onClick={toggleBookmark}
               className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center ${currentCreation.isBookmarked
-                  ? 'bg-rose-50 border-rose-200 text-rose-500 hover:bg-rose-100'
-                  : 'bg-white border-purple-100/60 text-[#8B88A5] hover:border-purple-200 hover:text-[#110E2C]'
+                ? 'bg-rose-50 border-rose-200 text-rose-500 hover:bg-rose-100'
+                : 'bg-white border-purple-100/60 text-[#8B88A5] hover:border-purple-200 hover:text-[#110E2C]'
                 }`}
               title={currentCreation.isBookmarked ? "Remove Bookmark" : "Bookmark Masterpiece"}
             >

@@ -15,6 +15,7 @@ import Community from '../Features/Marketing/Pages/Community';
 import Blog from '../Features/Marketing/Pages/Blog';
 import Stories from '../Features/Stories/Pages/Stories';
 import Poems from '../Features/Poems/Pages/Poems';
+import MusePage from '../Features/Chat/Pages/MusePage';
 
 export const appRouter = createBrowserRouter([
   {
@@ -56,6 +57,10 @@ export const appRouter = createBrowserRouter([
       {
         path: '/poem',
         element: <Poems />
+      },
+      {
+        path: '/muse',
+        element: <MusePage />
       }
     ]
   }
