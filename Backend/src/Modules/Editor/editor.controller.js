@@ -1,0 +1,83 @@
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { getPrompt } from './prompt.js';
+import storyModel from '../Story/story.model.js';
+
+export const processEditorAiAction = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { storyId, fullStoryContent, actionType, textTarget, styleConfig, prompt } = req.body;
+
+        if (!fullStoryContent) {
+            return res.status(400).json({
+                success: false,
+                message: "No text content provided."
+            });
+        }
+
+        const activeVibe = styleConfig?.vibe || "Neutral";
+        const activeGenre = styleConfig?.genre || "General Fiction";
+        const isPoetry =
+            activeGenre.toLowerCase().includes("poetry") ||
+            activeGenre.toLowerCase().includes("verse") ||
+            activeGenre.toLowerCase().includes("poem");
+
+        const modelOptions = {
+            model: "gemini-2.5-flash-lite",
+            apiKey: process.env.MuseApiKey,
+            temperature: isPoetry ? 0.90 : 0.75
+        };
+
+        const editorAiEngine = new ChatGoogleGenerativeAI(modelOptions);
+
+
+        const systemInstruction = isPoetry
+            ? `You are an elite, world-class poet and avant-garde literary collaborator.
+               Your absolute directive is to match the user's creative focus perfectly:
+               - CURRENT VIBE/MOOD: ${activeVibe}
+               - POETIC STYLE/GENRE: ${activeGenre}
+
+               CRITICAL FORMATTING RULES:
+               1. Preserve structural spacing: Return your lines with exact intentional line breaks (\\n) and stanza separations.
+               2. Do NOT write prose paragraphs. Focus on rhythm, meter, imagery, and line-level cadence.
+               3. Return ONLY the raw poetic lines requested. Do not include conversational remarks, markdown titles, or introductory polite text.`
+            : `You are an elite literary co-author and ghostwriter embedded directly inside a rich-text editor.
+               Your absolute directive is to match the user's target style perfectly:
+               - CURRENT VIBE/MOOD: ${activeVibe}
+               - TARGET GENRE: ${activeGenre}
+
+               CRITICAL FORMATTING RULE: Return ONLY the raw text modifications requested. Do not include conversational remarks, pleasantries, markdown titles, quotes, or conversational intros.`;
+
+        // Generate the structural instruction based on action type
+        const humanInstruction = getPrompt({ actionType, fullStoryContent, textTarget, prompt });
+
+        // Dispatch matrix data array payload down to Gemini
+        const aiResponse = await editorAiEngine.invoke([
+            new SystemMessage(systemInstruction),
+            new HumanMessage(humanInstruction)
+        ]);
+
+        const finalizedAiText = aiResponse.content.trim();
+
+        // Canvas Sync: Securely log current text state to MongoDB
+        if (storyId) {
+            await storyModel.findOneAndUpdate(
+                { _id: storyId, authorId: userId },
+                { $set: { content: fullStoryContent } },
+                { new: true, runValidators: true }
+            );
+        }
+
+        return res.status(200).json({
+            success: true,
+            aiResultText: finalizedAiText
+        });
+
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: err?.message
+        });
+    }
+};

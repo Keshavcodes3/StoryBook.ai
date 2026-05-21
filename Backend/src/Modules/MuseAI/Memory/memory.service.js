@@ -54,7 +54,7 @@ export const autoProcessAndStoreMemory = async (userId, sessionId, userMessageTe
                 memoryType: analysis.category // Automatically determined by the AI!
             },
             {
-                // $addToSet pushes items safely without creating duplicate strings
+
                 $addToSet: { data: { $each: analysis.extractedInsights } },
                 $set: { sourceSessionId: sessionId }
             },

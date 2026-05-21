@@ -29,6 +29,7 @@ app.get('/', (req, res) => {
 import userRoutes from './Modules/User/user.routes.js';
 import storyRoutes from './Modules/Story/story.routes.js';
 import chatRoutes from './Modules/MuseAI/chat.routes.js';
+import settingRoutes from './Modules/Setting/setting.routes.js';
 
 
 const baseUrl = "/api/v1"
@@ -36,5 +37,6 @@ const baseUrl = "/api/v1"
 app.use(`${baseUrl}/auth`, userRoutes)
 app.use(`${baseUrl}/story`, storyRoutes)
 app.use(`${baseUrl}/muse`, chatRoutes)
+app.use(`${baseUrl}/settings`, settingRoutes)
 
 export default app;

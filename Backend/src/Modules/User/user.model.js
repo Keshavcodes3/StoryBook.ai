@@ -12,6 +12,19 @@ const userSchema = new mongoose.Schema(
             maxlength: [30, 'Username cannot exceed 30 characters'],
             index: true,
         },
+        name: {
+            type: String,
+            default: '',
+        },
+        bio: {
+            type: String,
+            default: '',
+        },
+        theme: {
+            type: String,
+            enum: ['light', 'dark', 'system'],
+            default: 'light',
+        },
         email: {
             type: String,
             required: [true, 'Email is required'],

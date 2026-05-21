@@ -7,10 +7,10 @@ import { useSelector } from 'react-redux';
 const DashboardHome = () => {
     const { user } = useSelector((state) => state.auth)
     const userProfile = { name: user?.name || "Keshav" };
-    
+
     const statsData = [
-        { title: "Writing Streak", value: user?.Streak || "12", subtitle: "days", iconEmoji: "🔥", trend: null },
-        { title: "Words Written", value: "24,580", subtitle: "this week", iconEmoji: null, trend: { value: "+12%", isPositive: true } },
+        { title: "Writing Streak", value: user?.Streak || 0, subtitle: "days", iconEmoji: null, trend: null },
+        { title: "Drafts", value: user?.totalDrafts || 0, subtitle: "Saved drafts", iconEmoji: null, trend: null },
         { title: "Stories", value: user?.totalStoriesWritten || 0, subtitle: "Total stories", iconEmoji: null, trend: null },
         { title: "Poems", value: user?.totalPoems || 0, subtitle: "Total poems", iconEmoji: null, trend: null }
     ];
@@ -32,7 +32,7 @@ const DashboardHome = () => {
             {/* Welcome User Core Frame Banner */}
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-[#110E2C] mb-1">
-                    Good evening, {userProfile.name} 👋
+                    Good evening, {userProfile.name}
                 </h1>
                 <p className="text-sm text-[#6E6B85] font-medium tracking-wide">
                     Let's write something beautiful today.

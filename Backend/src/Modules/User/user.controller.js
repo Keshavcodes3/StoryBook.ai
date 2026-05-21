@@ -133,11 +133,15 @@ export const loginUser = async (req, res) => {
       expires: new Date(
         Date.now() + (parseInt(process.env.COOKIE_EXPIRE) || 7) * 24 * 60 * 60 * 1000
       ),
-      httpOnly: true, // Safeguards against XSS cookie theft
-      secure: process.env.NODE_ENV === 'production', // Sent over HTTPS only in production
-      sameSite: 'strict', // Mitigates CSRF vulnerabilities
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
     };
     res.cookie('token', token, cookieOptions)
+    await userModel.findOneAndUpdate(user._id, {
+      $inc: { Streak: +1 }
+    })
+
     return res
       .status(200)
       .json({
