@@ -24,7 +24,7 @@ export const processEditorAiAction = async (req, res) => {
 
         const modelOptions = {
             model: "gemini-2.5-flash-lite",
-            apiKey: process.env.MuseApiKey,
+            apiKey: process.env.MuseApiKey || process.env.GEMINI_API_KEY,
             temperature: isPoetry ? 0.90 : 0.75
         };
 
@@ -40,18 +40,20 @@ export const processEditorAiAction = async (req, res) => {
                CRITICAL FORMATTING RULES:
                1. Preserve structural spacing: Return your lines with exact intentional line breaks (\\n) and stanza separations.
                2. Do NOT write prose paragraphs. Focus on rhythm, meter, imagery, and line-level cadence.
-               3. Return ONLY the raw poetic lines requested. Do not include conversational remarks, markdown titles, or introductory polite text.`
+               3. Return ONLY the raw poetic lines requested. Do not include conversational remarks, markdown titles, or introductory polite text.
+               4. Ensure the poetry is deeply heartwarming, evocative, and touches the soul.`
             : `You are an elite literary co-author and ghostwriter embedded directly inside a rich-text editor.
                Your absolute directive is to match the user's target style perfectly:
                - CURRENT VIBE/MOOD: ${activeVibe}
                - TARGET GENRE: ${activeGenre}
 
-               CRITICAL FORMATTING RULE: Return ONLY the raw text modifications requested. Do not include conversational remarks, pleasantries, markdown titles, quotes, or conversational intros.`;
+               CRITICAL FORMATTING RULE: Return ONLY the raw text modifications requested. Do not include conversational remarks, pleasantries, markdown titles, quotes, or conversational intros.
+               Ensure the generated story content is richly detailed, immersive, and naturally long.`;
 
-        // Generate the structural instruction based on action type
+
         const humanInstruction = getPrompt({ actionType, fullStoryContent, textTarget, prompt });
 
-        // Dispatch matrix data array payload down to Gemini
+
         const aiResponse = await editorAiEngine.invoke([
             new SystemMessage(systemInstruction),
             new HumanMessage(humanInstruction)
@@ -59,11 +61,10 @@ export const processEditorAiAction = async (req, res) => {
 
         const finalizedAiText = aiResponse.content.trim();
 
-        // Canvas Sync: Securely log current text state to MongoDB
         if (storyId) {
             await storyModel.findOneAndUpdate(
-                { _id: storyId, authorId: userId },
-                { $set: { content: fullStoryContent } },
+                { _id: storyId, userId: userId },
+                { $set: { generatedText: fullStoryContent } },
                 { new: true, runValidators: true }
             );
         }
@@ -79,5 +80,30 @@ export const processEditorAiAction = async (req, res) => {
             message: "Internal server error",
             error: err?.message
         });
+    }
+};
+
+export const syncStory = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { storyId, fullStoryContent, title } = req.body;
+
+        if (!storyId || !fullStoryContent) {
+            return res.status(400).json({ success: false, message: "Missing required fields" });
+        }
+
+        const updated = await storyModel.findOneAndUpdate(
+            { _id: storyId, userId: userId },
+            { $set: { generatedText: fullStoryContent, title: title } },
+            { new: true }
+        );
+
+        if (!updated) {
+            return res.status(404).json({ success: false, message: "Story not found" });
+        }
+
+        return res.status(200).json({ success: true, message: "Synced" });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
     }
 };

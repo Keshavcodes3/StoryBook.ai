@@ -1,0 +1,25 @@
+import axios from "axios";
+
+const API_URL = "http://localhost:3000/api/v1/editor";
+
+export const syncStoryContent = async (storyId, fullStoryContent, title) => {
+    try {
+        const response = await axios.put(`${API_URL}/sync`, { storyId, fullStoryContent, title }, {
+            withCredentials: true,
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || "Failed to sync story";
+    }
+};
+
+export const processAiAction = async (data) => {
+    try {
+        const response = await axios.post(`${API_URL}/ai-action`, data, {
+            withCredentials: true,
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || "Failed to process AI action";
+    }
+};

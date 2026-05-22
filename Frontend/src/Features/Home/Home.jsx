@@ -2,6 +2,8 @@ import React from 'react';
 import Navbar from './Components/Navbar';
 import HeroSection from './Components/HeroSection';
 import FeaturesBanner from './Components/FeaturesBanner';
+import StatsSection from './Components/StatsSection';
+import RecentWorks from './Components/RecentWorks';
 
 const Home = () => {
     return (
@@ -14,6 +16,12 @@ const Home = () => {
                 <Navbar />
                 <HeroSection />
             </div>
+
+            {/* Stats Section */}
+            <StatsSection />
+
+            {/* Recent Works Section */}
+            <RecentWorks limit={10} />
             
             <FeaturesBanner />
         </div>

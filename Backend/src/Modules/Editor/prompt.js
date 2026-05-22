@@ -4,10 +4,16 @@ export const getPrompt = ({ actionType, fullStoryContent, textTarget, prompt }) 
     // Normalize incoming string cases from the frontend action triggers
     switch (actionType?.toLowerCase()) {
         case "continue":
-            humanInstruction = `Read the following story context carefully:
+            if (prompt) {
+                humanInstruction = `The user wants you to write a completely new, long, and highly detailed story or poetry based on this prompt: "${prompt}". 
+Ensure you strictly follow the selected genre and mood. Make it very long (3-4 paragraphs minimum for story, or a long multi-stanza for poetry). 
+You MUST provide a fitting title on the very first line in this exact format: "TITLE: [Your Title]", followed by a blank line, and then the full content.`;
+            } else {
+                humanInstruction = `Read the following context carefully:
 "${fullStoryContent}"
 
-Task: Write the next 2-3 logical sentences to smoothly continue the narrative flow from the very end of the text. Crucially, match the exact perspective, tense, and character POV established above.`;
+Task: Write a highly detailed, long continuation (at least 3-4 full paragraphs if it's a story, or a long, heartwarming multi-stanza continuation if it's poetry). Examine the specified genre and mood thoroughly. Deeply explore the world, the emotional core of the characters, and the narrative flow. Ensure the continuation smoothly connects from the very end of the existing text.`;
+            }
             break;
 
         case "rewrite":

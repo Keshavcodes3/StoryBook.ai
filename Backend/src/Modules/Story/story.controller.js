@@ -200,6 +200,58 @@ export const getAllContent = async (req, res) => {
     }
 };
 
+export const getTotalStats = async (req, res) => {
+    try {
+        const user = req.user;
+
+        const [totalStories, totalPoems] = await Promise.all([
+            sotryModel.countDocuments({ userId: user._id }),
+            poemCreationModel.countDocuments({ userId: user._id })
+        ]);
+
+        return res.status(200).json({
+            message: "Stats fetched successfully",
+            success: true,
+            data: {
+                totalStories,
+                totalPoems,
+                totalCreations: totalStories + totalPoems
+            }
+        });
+    } catch (err) {
+        return res.status(500).json({
+            message: err?.message,
+            success: false
+        });
+    }
+};
+
+export const getRecentWorks = async (req, res) => {
+    try {
+        const user = req.user;
+        const limit = req.query.limit || 10;
+
+        const [recentStories, recentPoems] = await Promise.all([
+            sotryModel.find({ userId: user._id }).sort({ createdAt: -1 }).limit(parseInt(limit) / 2),
+            poemCreationModel.find({ userId: user._id }).sort({ createdAt: -1 }).limit(parseInt(limit) / 2)
+        ]);
+
+        // Combine and sort by creation date
+        const allWorks = [...recentStories, ...recentPoems].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, parseInt(limit));
+
+        return res.status(200).json({
+            message: "Recent works fetched successfully",
+            success: true,
+            data: allWorks
+        });
+    } catch (err) {
+        return res.status(500).json({
+            message: err?.message,
+            success: false
+        });
+    }
+};
+
 export const deleteContent = async (req, res) => {
     try {
         const { type, id } = req.params;

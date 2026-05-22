@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { syncStoryContent, processAiAction } from '../Service/editorService';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -28,6 +29,79 @@ const Editor = () => {
     const [activeTab, setActiveTab] = useState('Suggestions');
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+    const [saveStatus, setSaveStatus] = useState('Saved');
+    const [customPrompt, setCustomPrompt] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [activeVibe, setActiveVibe] = useState('Neutral');
+    const [activeGenre, setActiveGenre] = useState(isPoetry ? 'Free Verse' : 'General Fiction');
+
+    const contentRef = useRef(null);
+    const titleRef = useRef(null);
+    const saveTimeoutRef = useRef(null);
+
+    const storyId = searchParams.get('id');
+
+    const triggerAutoSave = () => {
+        setSaveStatus('Saving...');
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        
+        saveTimeoutRef.current = setTimeout(async () => {
+            const fullContent = contentRef.current?.innerText || '';
+            const title = titleRef.current?.value || 'Untitled Story';
+            try {
+                if (storyId) {
+                    await syncStoryContent(storyId, fullContent, title);
+                }
+                setSaveStatus('Saved');
+            } catch (err) {
+                setSaveStatus('Error saving');
+            }
+        }, 1500);
+    };
+
+    const handleAiAction = async (actionType, textTarget = '') => {
+        setIsGenerating(true);
+        try {
+            const fullStoryContent = contentRef.current?.innerText || '';
+            const data = {
+                storyId,
+                fullStoryContent,
+                actionType,
+                textTarget,
+                styleConfig: { vibe: activeVibe, genre: activeGenre },
+                prompt: customPrompt
+            };
+            const response = await processAiAction(data);
+            if (response.success && contentRef.current) {
+                let aiText = response.aiResultText;
+                
+                // Extract TITLE if AI provided one
+                const titleMatch = aiText.match(/^TITLE:\s*(.*)\n*/i);
+                if (titleMatch) {
+                    if (titleRef.current) titleRef.current.value = titleMatch[1].trim();
+                    aiText = aiText.replace(titleMatch[0], '').trim();
+                }
+
+                if (actionType === 'continue' && !customPrompt) {
+                    // Append continuation
+                    const p = document.createElement('p');
+                    p.innerHTML = '<br/>' + aiText.replace(/\n/g, '<br/>');
+                    contentRef.current.appendChild(p);
+                } else {
+                    // Replace everything (custom prompt or rewrite)
+                    contentRef.current.innerHTML = aiText.replace(/\n/g, '<br/>');
+                }
+                
+                setCustomPrompt(''); // Clear prompt input
+                triggerAutoSave();
+            }
+        } catch (error) {
+            console.error("AI Action Error:", error);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     return (
         <div className="h-screen w-full flex flex-col bg-white overflow-hidden text-zinc-900 font-sans">
             {/* Top Utility Header */}
@@ -41,12 +115,9 @@ const Editor = () => {
                     </h1>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="px-4 py-2 text-sm font-medium text-zinc-500 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all duration-200">
-                        Save
-                    </button>
-                    <button className="px-4 py-2 text-sm font-medium text-zinc-500 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all duration-200">
-                        Save
-                    </button>
+                    <span className="text-xs font-medium text-zinc-400">
+                        {saveStatus}
+                    </span>
                     <button className="px-6 py-2 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 shadow-sm shadow-violet-600/20 rounded-lg transition-all duration-200">
                         Publish
                     </button>
@@ -66,6 +137,8 @@ const Editor = () => {
                                 </button>
                                 <input
                                     type="text"
+                                    ref={titleRef}
+                                    onChange={triggerAutoSave}
                                     defaultValue="Untitled Story"
                                     className="text-zinc-400 hover:text-zinc-600 focus:text-zinc-900 bg-transparent outline-none font-medium text-sm transition-all duration-200"
                                 />
@@ -73,10 +146,10 @@ const Editor = () => {
 
                             {/* Content Zone */}
                             <div className="space-y-6">
-                                <h1 className="text-4xl font-bold text-zinc-900 outline-none placeholder-zinc-300" contentEditable suppressContentEditableWarning>
+                                <h1 className="text-4xl font-bold text-zinc-900 outline-none placeholder-zinc-300" contentEditable suppressContentEditableWarning onInput={triggerAutoSave}>
                                     Chapter 1: The Beginning
                                 </h1>
-                                <div className="text-lg leading-relaxed text-zinc-700 outline-none min-h-[300px]" contentEditable suppressContentEditableWarning>
+                                <div ref={contentRef} className="text-lg leading-relaxed text-zinc-700 outline-none min-h-[300px]" contentEditable suppressContentEditableWarning onInput={triggerAutoSave}>
                                     The wind whispered through the trees as Aarav walked down the lonely path. He didn't know that this journey would change his life forever.
                                     <br /><br />
                                     <span className="text-zinc-300 pointer-events-none select-none">
@@ -160,21 +233,28 @@ const Editor = () => {
                                                     {/* Continue Writing Card */}
                                                     <div className="bg-white border border-violet-100/60 rounded-2xl p-5 shadow-sm shadow-violet-100/20 transition-all duration-200 hover:shadow-md hover:border-violet-200">
                                                         <h3 className="text-sm font-semibold text-zinc-800 mb-2">Continue Writing</h3>
-                                                        <p className="text-xs text-zinc-500 mb-5 leading-relaxed">
+                                                        <p className="text-xs text-zinc-500 mb-3 leading-relaxed">
                                                             Continue the story from here based on the current context...
                                                         </p>
-                                                        <button className="w-full py-2.5 bg-violet-50 hover:bg-violet-600 text-violet-600 hover:text-white text-sm font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border border-violet-100 hover:border-violet-600">
+                                                        <textarea 
+                                                            value={customPrompt}
+                                                            onChange={(e) => setCustomPrompt(e.target.value)}
+                                                            placeholder="Type a query or prompt..."
+                                                            className="w-full text-xs p-2 mb-3 bg-zinc-50 border border-zinc-200 rounded-lg outline-none focus:border-violet-400 resize-none"
+                                                            rows="2"
+                                                        />
+                                                        <button disabled={isGenerating} onClick={() => handleAiAction('continue')} className="w-full py-2.5 bg-violet-50 hover:bg-violet-600 text-violet-600 hover:text-white text-sm font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border border-violet-100 hover:border-violet-600 disabled:opacity-50">
                                                             <Sparkles className="w-4 h-4" />
-                                                            Continue
+                                                            {isGenerating ? 'Generating...' : 'Continue'}
                                                         </button>
                                                     </div>
 
                                                     {/* Quick Actions Stack */}
                                                     <div className="space-y-2">
-                                                        <ActionItem icon={Wand2} label="Rewrite" />
-                                                        <ActionItem icon={Sparkles} label="Make it dramatic" />
-                                                        <ActionItem icon={Scissors} label="Shorten" />
-                                                        <ActionItem icon={Maximize2} label="Expand" />
+                                                        <ActionItem icon={Wand2} label="Rewrite" onClick={() => handleAiAction('rewrite')} />
+                                                        <ActionItem icon={Sparkles} label="Make it dramatic" onClick={() => handleAiAction('make_it_dramatic')} />
+                                                        <ActionItem icon={Scissors} label="Shorten" onClick={() => handleAiAction('shorten')} />
+                                                        <ActionItem icon={Maximize2} label="Expand" onClick={() => handleAiAction('expand')} />
                                                     </div>
                                                 </div>
                                             ) : (
@@ -188,7 +268,7 @@ const Editor = () => {
                                                         <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Vibe & Mood</h4>
                                                         <div className="flex flex-wrap gap-2.5">
                                                             {['Romance', 'Sad', 'Motivational', 'Dark', 'Fantasy', 'Philosophical', 'Anime', 'Custom'].map(tag => (
-                                                                <button key={tag} className="px-3.5 py-1.5 bg-white border border-violet-100/60 hover:border-violet-300 hover:bg-violet-50 text-zinc-600 hover:text-violet-700 text-xs font-medium rounded-full transition-all duration-200 shadow-sm">
+                                                                <button key={tag} onClick={() => setActiveVibe(tag)} className={`px-3.5 py-1.5 border hover:border-violet-300 hover:bg-violet-50 text-xs font-medium rounded-full transition-all duration-200 shadow-sm ${activeVibe === tag ? 'bg-violet-100 border-violet-400 text-violet-800' : 'bg-white border-violet-100/60 text-zinc-600'}`}>
                                                                     {tag}
                                                                 </button>
                                                             ))}
@@ -200,7 +280,7 @@ const Editor = () => {
                                                         <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Genre & Style</h4>
                                                         <div className="flex flex-wrap gap-2.5">
                                                             {['High Fantasy', 'Sci-Fi & Cyberpunk', 'Mystery & Thriller', 'Contemporary Romance', 'Dark Horror', 'Historical Fiction', 'Lyrical Poetry', 'Free Verse', 'Dystopian', 'Action & Adventure', 'Mythology'].map(tag => (
-                                                                <button key={tag} className="px-3.5 py-1.5 bg-white border border-violet-100/60 hover:border-violet-300 hover:bg-violet-50 text-zinc-600 hover:text-violet-700 text-xs font-medium rounded-full transition-all duration-200 shadow-sm">
+                                                                <button key={tag} onClick={() => setActiveGenre(tag)} className={`px-3.5 py-1.5 border hover:border-violet-300 hover:bg-violet-50 text-xs font-medium rounded-full transition-all duration-200 shadow-sm ${activeGenre === tag ? 'bg-violet-100 border-violet-400 text-violet-800' : 'bg-white border-violet-100/60 text-zinc-600'}`}>
                                                                     {tag}
                                                                 </button>
                                                             ))}
@@ -253,8 +333,8 @@ const Editor = () => {
     );
 };
 
-const ActionItem = ({ icon: Icon, label }) => (
-    <button className="w-full flex items-center gap-3 px-4 py-3.5 bg-white border border-violet-100/50 hover:border-violet-300 text-zinc-600 hover:text-violet-600 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md group">
+const ActionItem = ({ icon: Icon, label, onClick }) => (
+    <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3.5 bg-white border border-violet-100/50 hover:border-violet-300 text-zinc-600 hover:text-violet-600 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md group">
         <div className="p-1.5 bg-violet-50/50 group-hover:bg-violet-100 rounded-lg transition-colors">
             <Icon className="w-4 h-4 text-zinc-400 group-hover:text-violet-500 transition-colors" />
         </div>
