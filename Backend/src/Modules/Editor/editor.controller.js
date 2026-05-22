@@ -2,11 +2,11 @@ import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { getPrompt } from './prompt.js';
 import storyModel from '../Story/story.model.js';
-
+import poemModel from '../Poem/poem.model.js';
 export const processEditorAiAction = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { storyId, fullStoryContent, actionType, textTarget, styleConfig, prompt } = req.body;
+        const { storyId, fullStoryContent, actionType, textTarget, styleConfig, prompt, type } = req.body;
 
         if (!fullStoryContent) {
             return res.status(400).json({
@@ -61,13 +61,8 @@ export const processEditorAiAction = async (req, res) => {
 
         const finalizedAiText = aiResponse.content.trim();
 
-        if (storyId) {
-            await storyModel.findOneAndUpdate(
-                { _id: storyId, userId: userId },
-                { $set: { generatedText: fullStoryContent } },
-                { new: true, runValidators: true }
-            );
-        }
+        // We do not save to DB here to avoid race conditions. 
+        // The frontend will call triggerAutoSave with the new complete text.
 
         return res.status(200).json({
             success: true,
@@ -86,13 +81,15 @@ export const processEditorAiAction = async (req, res) => {
 export const syncStory = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { storyId, fullStoryContent, title } = req.body;
+        const { storyId, fullStoryContent, title, type } = req.body;
 
         if (!storyId || !fullStoryContent) {
             return res.status(400).json({ success: false, message: "Missing required fields" });
         }
 
-        const updated = await storyModel.findOneAndUpdate(
+        const model = type === 'poetry' ? poemModel : storyModel;
+
+        const updated = await model.findOneAndUpdate(
             { _id: storyId, userId: userId },
             { $set: { generatedText: fullStoryContent, title: title } },
             { new: true }

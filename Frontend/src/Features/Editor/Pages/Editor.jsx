@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { syncStoryContent, processAiAction } from '../Service/editorService';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import {
     ArrowLeft,
     Bold,
@@ -26,6 +27,9 @@ const Editor = () => {
     const editorType = searchParams.get('type') || 'story';
     const isPoetry = editorType.toLowerCase() === 'poetry' || location.pathname.includes('/poem');
     
+    const chooseState = useSelector(state => state.choose);
+    const storiesState = useSelector(state => state.stories);
+    
     const [activeTab, setActiveTab] = useState('Suggestions');
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -41,16 +45,36 @@ const Editor = () => {
 
     const storyId = searchParams.get('id');
 
+    useEffect(() => {
+        let story = chooseState?.currentCreation;
+        if (!story && storyId) {
+            const allStories = [...(storiesState?.allContent?.stories || []), ...(chooseState?.creations?.stories || [])];
+            const allPoems = [...(storiesState?.allContent?.poems || []), ...(chooseState?.creations?.poems || [])];
+            story = [...allStories, ...allPoems].find(s => s._id === storyId);
+        }
+        
+        if (story) {
+            if (titleRef.current && titleRef.current.value === "Untitled Story") {
+                titleRef.current.value = story.title || 'Untitled Story';
+            }
+            if (contentRef.current && contentRef.current.innerText.includes("The wind whispered through the trees")) {
+                contentRef.current.innerHTML = story.generatedText || '';
+            }
+            setActiveVibe(story.mood || 'Neutral');
+            setActiveGenre(story.genre || (isPoetry ? 'Free Verse' : 'General Fiction'));
+        }
+    }, [chooseState?.currentCreation, storiesState?.allContent, storyId, isPoetry]);
+
     const triggerAutoSave = () => {
         setSaveStatus('Saving...');
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
         
         saveTimeoutRef.current = setTimeout(async () => {
-            const fullContent = contentRef.current?.innerText || '';
+            const fullContent = contentRef.current?.innerHTML || '';
             const title = titleRef.current?.value || 'Untitled Story';
             try {
                 if (storyId) {
-                    await syncStoryContent(storyId, fullContent, title);
+                    await syncStoryContent(storyId, fullContent, title, isPoetry ? 'poetry' : 'story');
                 }
                 setSaveStatus('Saved');
             } catch (err) {
@@ -69,7 +93,8 @@ const Editor = () => {
                 actionType,
                 textTarget,
                 styleConfig: { vibe: activeVibe, genre: activeGenre },
-                prompt: customPrompt
+                prompt: customPrompt,
+                type: isPoetry ? 'poetry' : 'story'
             };
             const response = await processAiAction(data);
             if (response.success && contentRef.current) {
@@ -100,6 +125,12 @@ const Editor = () => {
         } finally {
             setIsGenerating(false);
         }
+    };
+
+    const handleFormat = (command) => {
+        document.execCommand(command, false, null);
+        contentRef.current?.focus();
+        triggerAutoSave();
     };
 
     return (
@@ -156,6 +187,17 @@ const Editor = () => {
                                         The old clock tower stood in the distance...
                                     </span>
                                 </div>
+                                
+                                {isGenerating && (
+                                    <motion.div 
+                                        initial={{ opacity: 0, y: 10 }} 
+                                        animate={{ opacity: 1, y: 0 }} 
+                                        className="flex items-center justify-center gap-3 py-6 text-violet-500 bg-violet-50/50 rounded-xl border border-violet-100/50"
+                                    >
+                                        <Sparkles className="w-5 h-5 animate-pulse" />
+                                        <span className="text-sm font-medium animate-pulse">AI is weaving magic...</span>
+                                    </motion.div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -163,11 +205,12 @@ const Editor = () => {
                     {/* Bottom Status Bar */}
                     <div className="absolute bottom-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-md border-t border-violet-100/50 flex items-center justify-between px-6 z-10">
                         <div className="flex items-center gap-1.5">
-                            {[Bold, Italic, Underline, LinkIcon, AlignLeft, AlignCenter, ImageIcon].map((Icon, i) => (
-                                <button key={i} className="p-2 text-zinc-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all duration-200">
-                                    <Icon className="w-4 h-4" />
-                                </button>
-                            ))}
+                            <button onClick={() => handleFormat('bold')} className="p-2 text-zinc-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all duration-200"><Bold className="w-4 h-4" /></button>
+                            <button onClick={() => handleFormat('italic')} className="p-2 text-zinc-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all duration-200"><Italic className="w-4 h-4" /></button>
+                            <button onClick={() => handleFormat('underline')} className="p-2 text-zinc-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all duration-200"><Underline className="w-4 h-4" /></button>
+                            <div className="w-px h-4 bg-zinc-200 mx-1"></div>
+                            <button onClick={() => handleFormat('justifyLeft')} className="p-2 text-zinc-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all duration-200"><AlignLeft className="w-4 h-4" /></button>
+                            <button onClick={() => handleFormat('justifyCenter')} className="p-2 text-zinc-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all duration-200"><AlignCenter className="w-4 h-4" /></button>
                         </div>
                         <div className="text-xs font-medium text-zinc-400">
                             Words: <span className="text-zinc-600">120</span>

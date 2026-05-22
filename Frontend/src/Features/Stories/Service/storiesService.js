@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api/v1/stories';
+const API_BASE_URL = 'http://localhost:3000/api/v1/story';
 axios.defaults.withCredentials = true;
 
 const storiesService = {

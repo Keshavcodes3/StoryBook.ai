@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchTotalStats } from '../Redux/stories.slice';
+import { fetchTotalStats } from '../../Stories/Redux/stories.slice';
 
 const StatsSection = () => {
   const dispatch = useDispatch();

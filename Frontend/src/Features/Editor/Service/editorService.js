@@ -2,9 +2,9 @@ import axios from "axios";
 
 const API_URL = "http://localhost:3000/api/v1/editor";
 
-export const syncStoryContent = async (storyId, fullStoryContent, title) => {
+export const syncStoryContent = async (storyId, fullStoryContent, title, type) => {
     try {
-        const response = await axios.put(`${API_URL}/sync`, { storyId, fullStoryContent, title }, {
+        const response = await axios.put(`${API_URL}/sync`, { storyId, fullStoryContent, title, type }, {
             withCredentials: true,
         });
         return response.data;

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchRecentWorks } from '../Redux/stories.slice';
+import { fetchRecentWorks } from '../../Stories/Redux/stories.slice';
 
 const RecentWorks = ({ limit = 10 }) => {
   const dispatch = useDispatch();
