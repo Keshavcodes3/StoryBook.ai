@@ -1,5 +1,5 @@
-import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { createGeminiModel } from '../../config/gemini.js';
 import { getPrompt } from './prompt.js';
 import storyModel from '../Story/story.model.js';
 import poemModel from '../Poem/poem.model.js';
@@ -22,13 +22,10 @@ export const processEditorAiAction = async (req, res) => {
             activeGenre.toLowerCase().includes("verse") ||
             activeGenre.toLowerCase().includes("poem");
 
-        const modelOptions = {
-            model: "gemini-2.5-flash-lite",
-            apiKey: process.env.MuseApiKey || process.env.GEMINI_API_KEY,
-            temperature: isPoetry ? 0.90 : 0.75
-        };
-
-        const editorAiEngine = new ChatGoogleGenerativeAI(modelOptions);
+        const editorAiEngine = createGeminiModel({
+            model: 'gemini-2.0-flash',
+            temperature: isPoetry ? 0.9 : 0.75,
+        });
 
 
         const systemInstruction = isPoetry
@@ -70,10 +67,18 @@ export const processEditorAiAction = async (req, res) => {
         });
 
     } catch (err) {
+        const msg = err?.message || '';
+        const isKeyError =
+            msg.includes('API_KEY_INVALID') ||
+            msg.includes('API key not valid') ||
+            msg.includes('Gemini API key is not configured');
+
         return res.status(500).json({
             success: false,
-            message: "Internal server error",
-            error: err?.message
+            message: isKeyError
+                ? 'AI service is misconfigured. Set a valid GEMINI_API_KEY on the server and redeploy.'
+                : 'Internal server error',
+            error: process.env.NODE_ENV === 'production' && !isKeyError ? undefined : msg,
         });
     }
 };

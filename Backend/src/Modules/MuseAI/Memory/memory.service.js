@@ -1,13 +1,6 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import memoryModel from "./memory.model.js";
-
-// Initialize a fast model to extract data structure patterns out of text efficiently
-const extractionModel = new ChatGoogleGenerativeAI({
-    model: "gemini-2.5-flash-lite",
-    apiKey: process.env.MuseApiKey || process.env.GEMINI_API_KEY,
-    temperature: 0.2 // Low temperature ensures accurate, predictable extraction logic
-});
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { createGeminiModel } from '../../../config/gemini.js';
+import memoryModel from './memory.model.js';
 
 export const autoProcessAndStoreMemory = async (userId, sessionId, userMessageText) => {
     try {
@@ -31,45 +24,46 @@ export const autoProcessAndStoreMemory = async (userId, sessionId, userMessageTe
             }
         `;
 
+        const extractionModel = createGeminiModel({
+            model: 'gemini-2.0-flash',
+            temperature: 0.2,
+        });
+
         const response = await extractionModel.invoke([
             new SystemMessage(systemPrompt),
-            new HumanMessage(`Analyze this user message text: "${userMessageText}"`)
+            new HumanMessage(`Analyze this user message text: "${userMessageText}"`),
         ]);
 
         let cleanContent = response.content.trim();
-        if (cleanContent.startsWith("```")) {
-            cleanContent = cleanContent.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+        if (cleanContent.startsWith('```')) {
+            cleanContent = cleanContent.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
         }
 
         const analysis = JSON.parse(cleanContent);
 
-        if (!analysis.hasRelevantData || !analysis.extractedInsights || analysis.extractedInsights.length === 0) {
-            return { success: true, message: "No persistent data found in this message turn." };
+        if (!analysis.hasRelevantData || !analysis.extractedInsights?.length) {
+            return { success: true, message: 'No persistent data found in this message turn.' };
         }
-
 
         const updatedMemory = await memoryModel.findOneAndUpdate(
             {
                 userID: userId,
-                memoryType: analysis.category // Automatically determined by the AI!
+                memoryType: analysis.category,
             },
             {
-
                 $addToSet: { data: { $each: analysis.extractedInsights } },
-                $set: { sourceSessionId: sessionId }
+                $set: { sourceSessionId: sessionId },
             },
             {
                 new: true,
-                upsert: true // Creates the category document if it's the first time seeing it
+                upsert: true,
             }
         );
 
         console.log(`[Auto-Memory]: Successfully stashed to "${analysis.category}" for user ${userId}`);
         return { success: true, data: updatedMemory };
-
     } catch (err) {
-        console.error("Auto-Memory Processing Failed:", err.message);
-
+        console.error('Auto-Memory Processing Failed:', err.message);
         return { success: false, error: err.message };
     }
 };

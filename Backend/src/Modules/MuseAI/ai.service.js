@@ -1,12 +1,11 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-
+import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { createGeminiModel } from '../../config/gemini.js';
 
 const Prompt = ({ mode }) => {
     const basePersona = `You are the personal AI Muse of StoryBook.ai. You are an intuitive, supportive, yet critically sharp creative companion. Your goal is to guide the writer's voice, not overwrite it.`;
 
     switch (mode) {
-        case "prompt":
+        case 'prompt':
             return `
                 ${basePersona}
                 CRITICAL INSTRUCTION: You are in CREATIVE PROVOCATION mode. 
@@ -14,19 +13,19 @@ const Prompt = ({ mode }) => {
                 At the very end of your response, you MUST append an ambient environmental tag in this exact layout: [mood: type]
                 Select the most fitting mood type from these options: cozy-library, neon-rain, dark-gothic, cosmic-solitude.
             `;
-        case "feedback":
+        case 'feedback':
             return `
                 ${basePersona}
                 CRITICAL INSTRUCTION: You are in LITERARY MIRROR mode.
                 Analyze the user's latest written prose or concepts provided in the thread. Identify pacing drops, overused emotional crutches, or structural habits. Be direct, professional, and encouraging. Focus on artistic refinement.
             `;
-        case "coach":
+        case 'coach':
             return `
                 ${basePersona}
                 CRITICAL INSTRUCTION: You are in WRITING COACH mode.
                 Focus heavily on technical narrative mechanics: narrative arc, character consistency, subtext, showing vs. telling, and pacing logic.
             `;
-        case "chat":
+        case 'chat':
         default:
             return `
                 ${basePersona}
@@ -36,38 +35,36 @@ const Prompt = ({ mode }) => {
     }
 };
 
-
-
-const model = new ChatGoogleGenerativeAI({
-    model: "gemini-2.5-flash-lite",
-    apiKey: process.env.MuseApiKey || process.env.GEMINI_API_KEY
-})
-
 export const generateResponse = async ({ messages, mode }) => {
     try {
-        const operationalSystemInstruction = Prompt({ mode })
+        const model = createGeminiModel({ model: 'gemini-2.0-flash' });
+        const operationalSystemInstruction = Prompt({ mode });
 
         const structuredMessageHistory = messages.map((msg) => {
-            const role = (msg.role || '').toLowerCase()
-            const text = msg.content || msg.message || ""
+            const role = (msg.role || '').toLowerCase();
+            const text = msg.content || msg.message || '';
 
             if (role === 'user') {
-                return new HumanMessage(text)
-            } else if (role === 'system') {
-                return new SystemMessage(text)
-            } else if (role === 'ai' || role === 'assistant') {
-                return new AIMessage(text)
-            } else {
-                return new HumanMessage(text)
+                return new HumanMessage(text);
             }
-        })
-        const payloadContext = [new SystemMessage(operationalSystemInstruction), ...structuredMessageHistory]
+            if (role === 'system') {
+                return new SystemMessage(text);
+            }
+            if (role === 'ai' || role === 'assistant') {
+                return new AIMessage(text);
+            }
+            return new HumanMessage(text);
+        });
+
+        const payloadContext = [
+            new SystemMessage(operationalSystemInstruction),
+            ...structuredMessageHistory,
+        ];
 
         const responseMessageInstance = await model.invoke(payloadContext);
         return responseMessageInstance.content;
-
     } catch (err) {
-        console.error("LangChain Generation Service Error:", err?.message);
-        throw new Error("Failed to process the creative generation pipeline.");
+        console.error('LangChain Generation Service Error:', err?.message);
+        throw err;
     }
-}
+};
