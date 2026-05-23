@@ -95,12 +95,12 @@ const RegisterPage = () => {
     >
       <div className="space-y-1 mb-8">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-white">Sign Up</h2>
-          <span className="text-xs font-medium text-violet-400 bg-violet-500/10 px-2 py-1 rounded-full border border-violet-500/20">
+          <h2 className="text-3xl font-bold text-[#110E2C]">Sign Up</h2>
+          <span className="text-xs font-bold text-violet-600 bg-violet-100 px-2.5 py-1 rounded-full border border-violet-200">
             Step {step} of 2
           </span>
         </div>
-        <p className="text-sm text-white/40">
+        <p className="text-sm font-medium text-[#8B88A5]">
           {step === 1 ? "Choose your identity" : "Secure your account"}
         </p>
       </div>
@@ -127,12 +127,12 @@ const RegisterPage = () => {
               className="space-y-6"
             >
               <div className="space-y-3">
-                <label className="block text-white text-sm font-medium text-center">Select Avatar</label>
-                <div className="flex items-center justify-between bg-white/5 border border-white/10 p-4 rounded-2xl">
+                <label className="block text-[#110E2C] text-sm font-bold text-center">Select Avatar</label>
+                <div className="flex items-center justify-between bg-white border border-purple-100/60 p-4 rounded-2xl shadow-sm">
                   <button
                     type="button"
                     onClick={prevAvatar}
-                    className="p-3 bg-white/5 hover:bg-white/10 rounded-full text-white transition-all hover:scale-105 active:scale-95"
+                    className="p-3 bg-violet-50 hover:bg-violet-100 rounded-full text-violet-600 transition-all hover:scale-105 active:scale-95"
                   >
                     <ChevronLeft size={24} />
                   </button>
@@ -155,7 +155,7 @@ const RegisterPage = () => {
                   <button
                     type="button"
                     onClick={nextAvatar}
-                    className="p-3 bg-white/5 hover:bg-white/10 rounded-full text-white transition-all hover:scale-105 active:scale-95"
+                    className="p-3 bg-violet-50 hover:bg-violet-100 rounded-full text-violet-600 transition-all hover:scale-105 active:scale-95"
                   >
                     <ChevronRight size={24} />
                   </button>
@@ -212,7 +212,7 @@ const RegisterPage = () => {
                 <button
                   type="button"
                   onClick={prevStep}
-                  className="flex-1 bg-white/5 hover:bg-white/10 text-white font-medium py-3 rounded-full transition-all border border-white/10 flex items-center justify-center gap-2"
+                  className="flex-1 bg-white hover:bg-zinc-50 text-[#110E2C] font-bold py-3 rounded-xl transition-all border border-purple-100/60 shadow-sm flex items-center justify-center gap-2"
                 >
                   <ArrowLeft size={18} />
                   Back
@@ -225,18 +225,18 @@ const RegisterPage = () => {
                 </div>
               </div>
 
-              <div className="text-xs text-white/60 leading-relaxed text-center pt-2">
+              <div className="text-xs text-[#8B88A5] font-medium leading-relaxed text-center pt-2">
                 By signing up, you agree to our{' '}
-                <span className="text-white cursor-pointer hover:underline">Terms</span> and{' '}
-                <span className="text-white cursor-pointer hover:underline">Privacy Policy</span>.
+                <span className="text-violet-600 font-bold cursor-pointer hover:underline">Terms</span> and{' '}
+                <span className="text-violet-600 font-bold cursor-pointer hover:underline">Privacy Policy</span>.
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <p className="text-center text-sm text-white/40 pt-8">
+        <p className="text-center text-sm font-medium text-[#8B88A5] pt-8">
           Already have an account?{' '}
-          <Link to="/login" className="text-white hover:text-violet-500 transition-colors font-medium underline underline-offset-4">
+          <Link to="/login" className="text-violet-600 hover:text-violet-700 transition-colors font-bold underline underline-offset-4">
             Log in instead
           </Link>
         </p>

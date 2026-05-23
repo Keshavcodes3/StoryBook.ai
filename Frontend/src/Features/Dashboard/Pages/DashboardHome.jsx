@@ -30,6 +30,7 @@ const DashboardHome = () => {
     const currentPrompt = "Write about a memory that still makes you smile.";
 
     const recentWorksData = (recentWorks || []).map(work => ({
+        _id: work._id,
         title: work.title,
         type: work.format === 'story' ? 'Story' : 'Poem',
         timeAgo: 'Recently'

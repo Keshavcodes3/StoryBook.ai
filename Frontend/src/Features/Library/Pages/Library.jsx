@@ -1,19 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import WorkListItem from '../Components/WorkListItem';
 import { useChoose } from '../../Choose/Hooks/useChoose';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchAllContent } from '../../Stories/Redux/stories.slice';
 
 const TABS = ['All', 'Stories', 'Poems'];
 
 const Library = () => {
     const [activeTab, setActiveTab] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
-    const { creations, fetchMyWorks, loading, removeWork } = useChoose();
+    const { removeWork } = useChoose();
+    const { allContent, loading } = useSelector(state => state.stories);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     useEffect(() => {
-        fetchMyWorks();
-    }, []);
+        dispatch(fetchAllContent());
+    }, [dispatch]);
 
     const formatTimeAgo = (dateStr) => {
         if (!dateStr) return '';
@@ -49,8 +55,8 @@ const Library = () => {
 
     // Merge stories and poems from backend
     const allCreations = [
-        ...(creations?.stories || []).map(s => ({ ...s, category: 'Stories', type: 'Story' })),
-        ...(creations?.poems || []).map(p => ({ ...p, category: 'Poems', type: 'Poem' }))
+        ...(allContent?.stories || []).map(s => ({ ...s, category: 'Stories', type: 'Story' })),
+        ...(allContent?.poems || []).map(p => ({ ...p, category: 'Poems', type: 'Poem' }))
     ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     const filteredWorks = allCreations.filter(work => {
@@ -76,6 +82,7 @@ const Library = () => {
                 // Backend requires either 'story' or 'poetry'
                 const deleteType = format === 'poetry' ? 'poetry' : 'story';
                 await removeWork(deleteType, id);
+                dispatch(fetchAllContent()); // Refresh the Redux store after deletion
             } catch (err) {
                 console.error("Failed to delete creation:", err);
             }
@@ -164,6 +171,7 @@ const Library = () => {
                                         timeAgo={formatTimeAgo(work.createdAt)}
                                         gradientClass={getGradientClass(work)}
                                         onDelete={() => handleDelete(work._id, work.format)}
+                                        onClick={() => navigate(`/editor?type=${work.type.toLowerCase()}&id=${work._id}`)}
                                     />
                                 </motion.div>
                             ))}

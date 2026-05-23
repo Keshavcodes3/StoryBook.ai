@@ -229,3 +229,50 @@ export const getRecentWorks = async (req, res) => {
     });
   }
 };
+
+export const getAdminStats = async (req, res) => {
+  try {
+    // Basic authorization check
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admins only.'
+      });
+    }
+
+    const [totalUsers, totalStories, totalPoems] = await Promise.all([
+      userModel.countDocuments(),
+      sotryModel.countDocuments(),
+      poemCreationModel.countDocuments()
+    ]);
+
+    // Aggregate total streaks across all users
+    const streakData = await userModel.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalStreaks: { $sum: "$Streak" }
+        }
+      }
+    ]);
+    
+    const totalStreaks = streakData.length > 0 ? streakData[0].totalStreaks : 0;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalUsers,
+        totalStories,
+        totalPoems,
+        totalStreaks
+      }
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching admin stats",
+      error: err?.message
+    });
+  }
+};

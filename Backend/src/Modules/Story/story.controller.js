@@ -47,10 +47,18 @@ export const createNewContent = async (req, res) => {
             }
             const userId = user._id
             await userModel.findByIdAndUpdate(userId, {
-                $inc: { generationCredits: -2 }
-            })
-            await userModel.findByIdAndUpdate(userId, {
                 $inc: { totalStoriesWritten: +1 }
+            })
+            const updatedUser = await userModel.findByIdAndUpdate(userId, {
+                $inc: { generationCredits: -2 }
+            }, { new: true })
+
+            return res.status(201).json({
+                message: "Story created successfully",
+                success: true,
+                response: response,
+                data: creation,
+                creditsRemaining: updatedUser.generationCredits
             })
 
         }
@@ -72,20 +80,20 @@ export const createNewContent = async (req, res) => {
             }
             const userId = user._id
             await userModel.findByIdAndUpdate(userId, {
-                $inc: { generationCredits: -5 }
-            })
-            await userModel.findByIdAndUpdate(userId, {
                 $inc: { totalPoems: +1 }
             })
-        }
+            const updatedUser = await userModel.findByIdAndUpdate(userId, {
+                $inc: { generationCredits: -5 }
+            }, { new: true })
 
-        return res.status(201).json({
-            message: "Story created successfully",
-            success: true,
-            succes: true,
-            response: response,
-            data: creation
-        })
+            return res.status(201).json({
+                message: "Poem created successfully",
+                success: true,
+                response: response,
+                data: creation,
+                creditsRemaining: updatedUser.generationCredits
+            })
+        }
 
 
     } catch (err) {
@@ -155,9 +163,9 @@ export const followUpStory = async (req, res) => {
                 success: false
             })
         }
-        await userModel.findByIdAndUpdate(user._id, {
+        const updatedUser = await userModel.findByIdAndUpdate(user._id, {
             $inc: { generationCredits: -3 }
-        })
+        }, { new: true })
         const updatedStory = await sotryModel.findByIdAndUpdate(storyId, {
             $set: { generatedText: newContent }
         }, { new: true })
@@ -165,7 +173,8 @@ export const followUpStory = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "Story updated successfully!",
-            data: updatedStory
+            data: updatedStory,
+            creditsRemaining: updatedUser.generationCredits
         });
     } catch (err) {
         return res.status(500).json({
@@ -230,10 +239,11 @@ export const getRecentWorks = async (req, res) => {
     try {
         const user = req.user;
         const limit = req.query.limit || 10;
+        const limitInt = parseInt(limit, 10);
 
         const [recentStories, recentPoems] = await Promise.all([
-            sotryModel.find({ userId: user._id }).sort({ createdAt: -1 }).limit(parseInt(limit) / 2),
-            poemCreationModel.find({ userId: user._id }).sort({ createdAt: -1 }).limit(parseInt(limit) / 2)
+            sotryModel.find({ userId: user._id }).sort({ createdAt: -1 }).limit(limitInt),
+            poemCreationModel.find({ userId: user._id }).sort({ createdAt: -1 }).limit(limitInt)
         ]);
 
         // Combine and sort by creation date

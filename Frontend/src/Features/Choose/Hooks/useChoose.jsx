@@ -17,6 +17,7 @@ import {
     clearCurrentCreation,
     setIsBookmarked
 } from "../Redux/choose.slice";
+import { updateCredits } from "../../Auth/Redux/auth.slice";
 
 export const useChoose = () => {
     const dispatch = useDispatch()
@@ -49,6 +50,11 @@ export const useChoose = () => {
             dispatch(setFormat(creation.format || Data.format))
             dispatch(setUserPrompt(creation.userPrompt || Data.userPrompt))
             dispatch(setIsBookmarked(creation.isBookmarked || false))
+            
+            if (res.creditsRemaining !== undefined) {
+                dispatch(updateCredits(res.creditsRemaining))
+            }
+            
             return creation
         } catch (err) {
             const errorMsg = err?.response?.data?.message || err.message || "Failed to generate content."
@@ -67,6 +73,11 @@ export const useChoose = () => {
             // Backend returns { success: true, data: updatedStoryObject }
             const updatedCreation = res.data
             dispatch(setCurrentCreation(updatedCreation))
+            
+            if (res.creditsRemaining !== undefined) {
+                dispatch(updateCredits(res.creditsRemaining))
+            }
+            
             return updatedCreation
         } catch (err) {
             const errorMsg = err?.response?.data?.message || err.message || "Failed to refine content."

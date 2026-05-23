@@ -23,7 +23,7 @@ import {
 const Editor = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const editorType = searchParams.get('type') || 'story';
     const isPoetry = editorType.toLowerCase() === 'poetry' || location.pathname.includes('/poem');
     
@@ -38,6 +38,7 @@ const Editor = () => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [activeVibe, setActiveVibe] = useState('Neutral');
     const [activeGenre, setActiveGenre] = useState(isPoetry ? 'Free Verse' : 'General Fiction');
+    const [loadedStoryId, setLoadedStoryId] = useState(null);
 
     const contentRef = useRef(null);
     const titleRef = useRef(null);
@@ -48,22 +49,27 @@ const Editor = () => {
     useEffect(() => {
         let story = chooseState?.currentCreation;
         if (!story && storyId) {
-            const allStories = [...(storiesState?.allContent?.stories || []), ...(chooseState?.creations?.stories || [])];
-            const allPoems = [...(storiesState?.allContent?.poems || []), ...(chooseState?.creations?.poems || [])];
+            const allStories = [...(storiesState?.allContent?.stories || []), ...(chooseState?.creations?.stories || []), ...(storiesState?.recentWorks || [])];
+            const allPoems = [...(storiesState?.allContent?.poems || []), ...(chooseState?.creations?.poems || []), ...(storiesState?.recentWorks || [])];
             story = [...allStories, ...allPoems].find(s => s._id === storyId);
         }
         
-        if (story) {
-            if (titleRef.current && titleRef.current.value === "Untitled Story") {
+        if (story && loadedStoryId !== storyId) {
+            if (titleRef.current) {
                 titleRef.current.value = story.title || 'Untitled Story';
             }
-            if (contentRef.current && contentRef.current.innerText.includes("The wind whispered through the trees")) {
-                contentRef.current.innerHTML = story.generatedText || '';
+            if (contentRef.current) {
+                let textToDisplay = story.generatedText || '';
+                if (textToDisplay && !textToDisplay.includes('<br')) {
+                    textToDisplay = textToDisplay.replace(/\n/g, '<br/>');
+                }
+                contentRef.current.innerHTML = textToDisplay;
             }
             setActiveVibe(story.mood || 'Neutral');
             setActiveGenre(story.genre || (isPoetry ? 'Free Verse' : 'General Fiction'));
+            setLoadedStoryId(storyId);
         }
-    }, [chooseState?.currentCreation, storiesState?.allContent, storyId, isPoetry]);
+    }, [chooseState?.currentCreation, storiesState?.allContent, storiesState?.recentWorks, storyId, isPoetry, loadedStoryId]);
 
     const triggerAutoSave = () => {
         setSaveStatus('Saving...');
@@ -73,8 +79,12 @@ const Editor = () => {
             const fullContent = contentRef.current?.innerHTML || '';
             const title = titleRef.current?.value || 'Untitled Story';
             try {
-                if (storyId) {
-                    await syncStoryContent(storyId, fullContent, title, isPoetry ? 'poetry' : 'story');
+                const response = await syncStoryContent(storyId, fullContent, title, isPoetry ? 'poetry' : 'story');
+                if (response?.storyId && response.storyId !== storyId) {
+                    setSearchParams(prev => {
+                        prev.set('id', response.storyId);
+                        return prev;
+                    }, { replace: true });
                 }
                 setSaveStatus('Saved');
             } catch (err) {
@@ -87,6 +97,10 @@ const Editor = () => {
         setIsGenerating(true);
         try {
             const fullStoryContent = contentRef.current?.innerText || '';
+            if (!textTarget) {
+                textTarget = window.getSelection().toString();
+            }
+            
             const data = {
                 storyId,
                 fullStoryContent,
@@ -162,31 +176,30 @@ const Editor = () => {
                     <div className="flex-1 overflow-y-auto custom-scrollbar relative">
                         <div className="max-w-3xl mx-auto w-full px-8 py-16 pb-32">
                             {/* Top Section */}
-                            <div className="flex items-center gap-3 mb-10 group">
-                                <button className="p-1.5 text-zinc-300 hover:text-violet-500 rounded-md transition-colors opacity-0 group-hover:opacity-100">
-                                    <ArrowLeft className="w-4 h-4" />
+                            <div className="flex items-center gap-3 mb-6 group">
+                                <button onClick={() => navigate(-1)} className="p-1.5 text-zinc-300 hover:text-violet-500 rounded-md transition-colors opacity-0 group-hover:opacity-100">
+                                    <ArrowLeft className="w-5 h-5" />
                                 </button>
                                 <input
                                     type="text"
                                     ref={titleRef}
                                     onChange={triggerAutoSave}
                                     defaultValue="Untitled Story"
-                                    className="text-zinc-400 hover:text-zinc-600 focus:text-zinc-900 bg-transparent outline-none font-medium text-sm transition-all duration-200"
+                                    placeholder="Enter your title..."
+                                    className="w-full text-4xl font-bold text-zinc-900 hover:text-zinc-900 focus:text-zinc-900 bg-transparent outline-none placeholder-zinc-300 transition-all duration-200"
                                 />
                             </div>
 
                             {/* Content Zone */}
                             <div className="space-y-6">
-                                <h1 className="text-4xl font-bold text-zinc-900 outline-none placeholder-zinc-300" contentEditable suppressContentEditableWarning onInput={triggerAutoSave}>
-                                    Chapter 1: The Beginning
-                                </h1>
-                                <div ref={contentRef} className="text-lg leading-relaxed text-zinc-700 outline-none min-h-[300px]" contentEditable suppressContentEditableWarning onInput={triggerAutoSave}>
-                                    The wind whispered through the trees as Aarav walked down the lonely path. He didn't know that this journey would change his life forever.
-                                    <br /><br />
-                                    <span className="text-zinc-300 pointer-events-none select-none">
-                                        The old clock tower stood in the distance...
-                                    </span>
-                                </div>
+                                <div 
+                                    ref={contentRef} 
+                                    className="text-lg leading-relaxed text-zinc-700 outline-none min-h-[300px]" 
+                                    contentEditable 
+                                    suppressContentEditableWarning 
+                                    onInput={triggerAutoSave}
+                                    placeholder="Once upon a time..."
+                                ></div>
                                 
                                 {isGenerating && (
                                     <motion.div 

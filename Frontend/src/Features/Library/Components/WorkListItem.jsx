@@ -2,9 +2,10 @@ import React from 'react';
 import { Maximize2, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const WorkListItem = ({ title, type, metrics, timeAgo, gradientClass, onDelete }) => {
+const WorkListItem = ({ title, type, metrics, timeAgo, gradientClass, onDelete, onClick }) => {
     return (
         <motion.div
+            onClick={onClick}
             whileHover={{ scale: 1.002, backgroundColor: 'rgba(255, 255, 255, 1)' }}
             className="flex items-center justify-between p-4 md:px-6 bg-white/60 border-b border-purple-100/30 hover:border-purple-100/60 transition-colors duration-300 group cursor-pointer"
         >

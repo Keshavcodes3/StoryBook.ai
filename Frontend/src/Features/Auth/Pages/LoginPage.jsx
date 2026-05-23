@@ -49,8 +49,8 @@ const LoginPage = () => {
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-1 mb-8">
-          <h2 className="text-2xl font-bold text-white">Log In</h2>
-          <p className="text-sm text-white/40">Enter your credentials to access your account</p>
+          <h2 className="text-3xl font-bold text-[#110E2C]">Log In</h2>
+          <p className="text-sm font-medium text-[#8B88A5]">Enter your credentials to access your account</p>
         </div>
 
         {error && (
@@ -94,9 +94,9 @@ const LoginPage = () => {
           Sign In
         </AuthButton>
 
-        <p className="text-center text-sm text-white/40 pt-4">
+        <p className="text-center text-sm font-medium text-[#8B88A5] pt-4">
           Don't have an account?{' '}
-          <Link to="/register" name="register-link" id="register-link" className="text-white hover:text-violet-500 transition-colors font-medium underline underline-offset-4">
+          <Link to="/register" name="register-link" id="register-link" className="text-violet-600 hover:text-violet-700 transition-colors font-bold underline underline-offset-4">
             Create an account
           </Link>
         </p>

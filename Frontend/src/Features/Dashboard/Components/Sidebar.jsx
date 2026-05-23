@@ -4,20 +4,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Home, PenTool, BookOpen, BarChart2,
-    Users, Compass, Settings, Feather, ChevronLeft
+    Users, Compass, Settings, Feather, ChevronLeft, ShieldAlert
 } from 'lucide-react';
+import { useSelector } from 'react-redux';
 
 const Sidebar = ({ activeTab = 'Home', onTabChange, isCollapsed, setIsCollapsed }) => {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const { user } = useSelector((state) => state.auth);
+
     const menuItems = [
         { name: 'Home', icon: Home, path: '/dashboard' },
         { name: 'Write', icon: PenTool, path: '/choose' },
         { name: 'Library', icon: BookOpen, path: '/library' },
-        { name: 'Analytics', icon: BarChart2, path: '/analytics' },
-        { name: 'Community', icon: Users, path: '/community' },
         { name: 'AI Muse', icon: Compass, path: '/muse' },
+        ...(user?.role === 'admin' ? [{ name: 'Admin Dashboard', icon: ShieldAlert, path: '/admin' }] : []),
         { name: 'Settings', icon: Settings, path: '/settings' },
     ];
 

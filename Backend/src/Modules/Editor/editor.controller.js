@@ -8,10 +8,10 @@ export const processEditorAiAction = async (req, res) => {
         const userId = req.user.id;
         const { storyId, fullStoryContent, actionType, textTarget, styleConfig, prompt, type } = req.body;
 
-        if (!fullStoryContent) {
+        if (!fullStoryContent && !prompt) {
             return res.status(400).json({
                 success: false,
-                message: "No text content provided."
+                message: "No text content or prompt provided."
             });
         }
 
@@ -83,11 +83,24 @@ export const syncStory = async (req, res) => {
         const userId = req.user.id;
         const { storyId, fullStoryContent, title, type } = req.body;
 
-        if (!storyId || !fullStoryContent) {
+        if (!fullStoryContent) {
             return res.status(400).json({ success: false, message: "Missing required fields" });
         }
 
         const model = type === 'poetry' ? poemModel : storyModel;
+
+        if (!storyId || storyId === 'new' || storyId === 'undefined') {
+            const newStory = await model.create({
+                userId: userId,
+                title: title || 'Untitled Story',
+                format: type === 'poetry' ? 'poetry' : 'story',
+                mood: 'Neutral',
+                genre: type === 'poetry' ? 'Free Verse' : 'General Fiction',
+                userPrompt: 'Custom User Story',
+                generatedText: fullStoryContent
+            });
+            return res.status(200).json({ success: true, message: "Created", storyId: newStory._id });
+        }
 
         const updated = await model.findOneAndUpdate(
             { _id: storyId, userId: userId },
@@ -99,7 +112,7 @@ export const syncStory = async (req, res) => {
             return res.status(404).json({ success: false, message: "Story not found" });
         }
 
-        return res.status(200).json({ success: true, message: "Synced" });
+        return res.status(200).json({ success: true, message: "Synced", storyId: updated._id });
     } catch (err) {
         return res.status(500).json({ success: false, message: err.message });
     }

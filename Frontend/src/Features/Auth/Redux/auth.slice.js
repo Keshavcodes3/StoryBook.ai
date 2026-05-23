@@ -16,10 +16,15 @@ const authSlice = createSlice({
         },
         setError: (state, action) => {
             state.error = action.payload
+        },
+        updateCredits: (state, action) => {
+            if (state.user) {
+                state.user.generationCredits = action.payload;
+            }
         }
     }
 })
 
 
-export const { setError, setLoading, setUser } = authSlice.actions
+export const { setError, setLoading, setUser, updateCredits } = authSlice.actions
 export default authSlice.reducer

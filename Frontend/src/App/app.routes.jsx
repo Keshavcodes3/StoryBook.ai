@@ -8,26 +8,17 @@ import Protected from './protected';
 import Choice from '../Features/Choose/Pages/Choice';
 import DashboardLayout from './DashboardLayout';
 import Library from '../Features/Library/Pages/Library';
-import Features from '../Features/Marketing/Pages/Features';
-import Tools from '../Features/Marketing/Pages/Tools';
-import Pricing from '../Features/Marketing/Pages/Pricing';
-import Community from '../Features/Marketing/Pages/Community';
-import Blog from '../Features/Marketing/Pages/Blog';
 
 import MusePage from '../Features/Chat/Pages/MusePage';
 import SettingsPage from '../Features/Setting/Pages/SettingsPage';
 import Editor from '../Features/Editor/Pages/Editor';
+import AdminDashboard from '../Features/Admin/Pages/AdminDashboard';
 
 export const appRouter = createBrowserRouter([
   {
     path: '/',
     element: <Home />
   },
-  { path: '/features', element: <Features /> },
-  { path: '/tools', element: <Tools /> },
-  { path: '/pricing', element: <Pricing /> },
-  { path: '/community', element: <Community /> },
-  { path: '/blog', element: <Blog /> },
   {
     path: '/login',
     element: <LoginPage />,
@@ -60,12 +51,20 @@ export const appRouter = createBrowserRouter([
         element: <Editor />
       },
       {
+        path: '/editor',
+        element: <Editor />
+      },
+      {
         path: '/muse',
         element: <MusePage />
       },
       {
         path: '/settings',
         element: <SettingsPage />
+      },
+      {
+        path: '/admin',
+        element: <AdminDashboard />
       }
     ]
   }
