@@ -1,12 +1,14 @@
-import axios from 'axios';
+import { createServiceClient, setStoredToken } from '../../../config/apiClient.js';
 
-const API_BASE_URL = 'https://storybook-ai-bgyd.onrender.com/api/v1/auth';
-axios.defaults.withCredentials = true;
+const API = createServiceClient('/auth');
 
 const authService = {
   login: async (credentials) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/login`, credentials);
+      const response = await API.post('/login', credentials);
+      if (response.data?.token) {
+        setStoredToken(response.data.token);
+      }
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -15,7 +17,10 @@ const authService = {
 
   register: async (userData) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/register`, userData);
+      const response = await API.post('/register', userData);
+      if (response.data?.token) {
+        setStoredToken(response.data.token);
+      }
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
@@ -24,12 +29,16 @@ const authService = {
 
   getMe: async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/me`);
+      const response = await API.get('/me');
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
     }
-  }
+  },
+
+  logout: async () => {
+    setStoredToken(null);
+  },
 };
 
 export default authService;

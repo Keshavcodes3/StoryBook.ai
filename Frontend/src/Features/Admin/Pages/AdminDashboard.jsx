@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { createServiceClient } from '../../../config/apiClient.js';
 import { motion } from 'framer-motion';
 import { Users, BookOpen, PenTool, Flame, ShieldAlert, AlertCircle } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -19,9 +19,8 @@ const AdminDashboard = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const response = await axios.get('https://storybook-ai-bgyd.onrender.com/api/v1/auth/admin/stats', {
-                    withCredentials: true
-                });
+                const authApi = createServiceClient('/auth');
+                const response = await authApi.get('/admin/stats');
                 if (response.data.success) {
                     setStats(response.data.data);
                 }

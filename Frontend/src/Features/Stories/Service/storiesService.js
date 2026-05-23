@@ -1,72 +1,61 @@
-import axios from 'axios';
+import { createServiceClient } from '../../../config/apiClient.js';
 
-const API_BASE_URL = 'https://storybook-ai-bgyd.onrender.com/api/v1/story';
-axios.defaults.withCredentials = true;
+const API = createServiceClient('/story');
 
 const storiesService = {
-  // Get all stories and poems
   getAllContent: async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/all`);
+      const response = await API.get('/all');
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
     }
   },
 
-  // Get total stats (total stories and poems count)
   getTotalStats: async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/stats`);
+      const response = await API.get('/stats');
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
     }
   },
 
-  // Get recent works (stories and poems)
   getRecentWorks: async (limit = 10) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/recent`, {
-        params: { limit }
-      });
+      const response = await API.get('/recent', { params: { limit } });
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
     }
   },
 
-  // Create new content
   createContent: async (contentData) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/create`, contentData);
+      const response = await API.post('/create', contentData);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
     }
   },
 
-  // Follow up on a story
   followUpStory: async (storyId, followUpMessage) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/follow-up/${storyId}`, {
-        followUpMessage
-      });
+      const response = await API.post(`/follow-up/${storyId}`, { followUpMessage });
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
     }
   },
 
-  // Delete content
   deleteContent: async (type, id) => {
     try {
-      const response = await axios.delete(`${API_BASE_URL}/delete/${type}/${id}`);
+      const response = await API.delete(`/delete/${type}/${id}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
     }
-  }
+  },
 };
 
 export default storiesService;

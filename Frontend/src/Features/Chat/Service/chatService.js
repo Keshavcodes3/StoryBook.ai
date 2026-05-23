@@ -1,26 +1,23 @@
-import axios from 'axios';
+import { createServiceClient } from '../../../config/apiClient.js';
 
-const API = axios.create({
-    baseURL: "https://storybook-ai-bgyd.onrender.com/api/v1/muse",
-    withCredentials: true
-});
+const API = createServiceClient('/muse');
 
 export const startChat = async () => {
-    const response = await API.post('/start');
-    return response.data;
+  const response = await API.post('/start');
+  return response.data;
 };
 
 export const retrieveChat = async () => {
-    const response = await API.get('/retrieve');
-    return response.data;
+  const response = await API.get('/retrieve');
+  return response.data;
 };
 
 export const sendMessage = async ({ text, activeMode }) => {
-    const response = await API.post('/send', { text, activeMode });
-    return response.data;
+  const response = await API.post('/send', { text, activeMode });
+  return response.data;
 };
 
 export const getMemoryBank = async () => {
-    const response = await API.get('/memory');
-    return response.data;
+  const response = await API.get('/memory');
+  return response.data;
 };

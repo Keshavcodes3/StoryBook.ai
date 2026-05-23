@@ -1,25 +1,21 @@
-import axios from "axios";
+import { createServiceClient } from '../../../config/apiClient.js';
 
-const API_URL = "https://storybook-ai-bgyd.onrender.com/api/v1/editor";
+const API = createServiceClient('/editor');
 
 export const syncStoryContent = async (storyId, fullStoryContent, title, type) => {
-    try {
-        const response = await axios.put(`${API_URL}/sync`, { storyId, fullStoryContent, title, type }, {
-            withCredentials: true,
-        });
-        return response.data;
-    } catch (error) {
-        throw error.response?.data?.message || "Failed to sync story";
-    }
+  try {
+    const response = await API.put('/sync', { storyId, fullStoryContent, title, type });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || 'Failed to sync story';
+  }
 };
 
 export const processAiAction = async (data) => {
-    try {
-        const response = await axios.post(`${API_URL}/ai-action`, data, {
-            withCredentials: true,
-        });
-        return response.data;
-    } catch (error) {
-        throw error.response?.data?.message || "Failed to process AI action";
-    }
+  try {
+    const response = await API.post('/ai-action', data);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || 'Failed to process AI action';
+  }
 };

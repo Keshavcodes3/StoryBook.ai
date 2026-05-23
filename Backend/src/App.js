@@ -10,10 +10,13 @@ import morgan from 'morgan'
 dotenv.config();
 const app = express();
 const allowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    process.env.FRONTEND_URL
-].filter(Boolean);
+    ...new Set([
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'https://story-book-ai-eta.vercel.app',
+        process.env.FRONTEND_URL,
+    ].filter(Boolean)),
+];
 
 app.use(cors({
     origin: function (origin, callback) {
@@ -36,16 +39,9 @@ app.use(cors({
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-    optionsSuccessStatus: 200 // CRUCIAL: Forces older browsers to respond with a 200 on OPTIONS
+    optionsSuccessStatus: 200
 }));
 
-// A tiny fallback route middleware to double-ensure OPTIONS requests never hang or 500
-app.use((req, res, next) => {
-    if (req.method === 'OPTIONS') {
-        return res.sendStatus(200);
-    }
-    next();
-});
 app.use(express.json());
 app.use(cookie());
 app.use(morgan("dev"))

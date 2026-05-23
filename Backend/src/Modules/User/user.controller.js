@@ -1,6 +1,6 @@
 import sendResponse from '../../Common/sendResponse.js';
+import { getAuthCookieOptions } from '../../Common/authCookieOptions.js';
 import userModel from './user.model.js';
-import jwt from 'jsonwebtoken';
 import userUtils from './user.utils.js';
 import sotryModel from '../Story/story.model.js';
 import poemCreationModel from '../Poem/poem.model.js';
@@ -43,24 +43,15 @@ export const registerUser = async (req, res) => {
       avatar: avatar || '',
     });
 
-    const token = userUtils.generateToken({ id: newUser._id, tier: newUser.tier })
-
-    const cookieOptions = {
-      expires: new Date(
-        Date.now() + (parseInt(process.env.COOKIE_EXPIRE) || 7) * 24 * 60 * 60 * 1000
-      ),
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    };
-
+    const token = userUtils.generateToken({ id: newUser._id, tier: newUser.tier });
 
     return res
       .status(201)
-      .cookie('token', token, cookieOptions)
+      .cookie('token', token, getAuthCookieOptions())
       .json({
         success: true,
         message: 'Account created successfully!',
+        token,
         user: newUser,
       });
 
@@ -122,33 +113,19 @@ export const loginUser = async (req, res) => {
     }
 
 
-    const token = jwt.sign(
-      { id: user._id, tier: user.tier },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE || '7d' }
-    );
+    const token = userUtils.generateToken({ id: user._id, tier: user.tier });
 
+    res.cookie('token', token, getAuthCookieOptions());
+    await userModel.findByIdAndUpdate(user._id, {
+      $inc: { Streak: 1 },
+    });
 
-    const cookieOptions = {
-      expires: new Date(
-        Date.now() + (parseInt(process.env.COOKIE_EXPIRE) || 7) * 24 * 60 * 60 * 1000
-      ),
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    };
-    res.cookie('token', token, cookieOptions)
-    await userModel.findOneAndUpdate(user._id, {
-      $inc: { Streak: +1 }
-    })
-
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: 'Logged in successfully!',
-        user,
-      });
+    return res.status(200).json({
+      success: true,
+      message: 'Logged in successfully!',
+      token,
+      user,
+    });
 
   } catch (error) {
     console.error('Login Error:', error);

@@ -1,6 +1,7 @@
 import { setUser, setError, setLoading } from "../Redux/auth.slice.js";
 import { useDispatch } from 'react-redux';
 import authService from "../Service/authService";
+import { logout as logoutFromServer } from "../../Setting/Service/settingService";
 
 export const useAuth = () => {
     const dispatch = useDispatch();
@@ -52,8 +53,9 @@ export const useAuth = () => {
     const logoutUser = async () => {
         dispatch(setLoading(true));
         try {
-            await authService.logout();
+            await logoutFromServer();
         } catch (err) {
+            await authService.logout();
             console.error("Logout warning:", err.message);
         } finally {
             dispatch(setUser(null));

@@ -1,22 +1,20 @@
-import axios from 'axios';
+import { createServiceClient, setStoredToken } from '../../../config/apiClient.js';
 
-const API = axios.create({
-    baseURL: "https://storybook-ai-bgyd.onrender.com/api/v1/settings",
-    withCredentials: true
-});
+const API = createServiceClient('/settings');
 
 export const updateProfile = async (data) => {
-    const response = await API.post('/update', data);
-    return response.data;
+  const response = await API.post('/update', data);
+  return response.data;
 };
 
-
 export const logout = async () => {
-    const response = await API.post('/logout');
-    return response.data;
+  const response = await API.post('/logout');
+  setStoredToken(null);
+  return response.data;
 };
 
 export const deleteAccount = async () => {
-    const response = await API.post('/deleteAccount');
-    return response.data;
+  const response = await API.post('/deleteAccount');
+  setStoredToken(null);
+  return response.data;
 };

@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs'
+import { getAuthCookieOptions } from '../../Common/authCookieOptions.js';
 import userModel from '../User/user.model.js'
 import chatModel from '../../Modules/MuseAI/chat.model.js'
 import poemModel from '../Poem/poem.model.js'
@@ -83,7 +84,7 @@ export const Logout = async (req, res) => {
                 token: token
             });
         }
-        res.clearCookie("token")
+        res.clearCookie('token', getAuthCookieOptions());
         return res.status(200).json({
             message: "Logged out successfully",
             success: true
