@@ -11,22 +11,41 @@ dotenv.config();
 const app = express();
 const allowedOrigins = [
     'http://localhost:5173',
+    'http://localhost:3000',
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (mobile apps, Postman, etc.)
+        // 1. Allow internal/server-to-server or tools like Postman (no origin)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) {
+
+        // 2. Clean verification against your array strings
+        // Trim any trailing slashes to prevent string mismatches
+        const cleanOrigin = origin.replace(/\/$/, "");
+        const cleanAllowed = allowedOrigins.map(o => o.replace(/\/$/, ""));
+
+        if (cleanAllowed.includes(cleanOrigin)) {
             return callback(null, true);
+        } else {
+            // DO NOT throw a raw Error here. It triggers a 500 crash.
+            // Just return false to block the domain safely via standard CORS headers.
+            return callback(null, false);
         }
-        return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    optionsSuccessStatus: 200 // CRUCIAL: Forces older browsers to respond with a 200 on OPTIONS
 }));
+
+// A tiny fallback route middleware to double-ensure OPTIONS requests never hang or 500
+app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
 app.use(express.json());
 app.use(cookie());
 app.use(morgan("dev"))
