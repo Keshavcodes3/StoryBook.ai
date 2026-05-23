@@ -2,7 +2,7 @@ import 'dotenv/config'
 
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { poetryPrompt, storyPrompt, titlePrompt } from "./story.prompt";
+import { poetryPrompt, storyPrompt, titlePrompt } from "./story.prompt.js";
 
 
 const geminiModel = new ChatGoogleGenerativeAI({
