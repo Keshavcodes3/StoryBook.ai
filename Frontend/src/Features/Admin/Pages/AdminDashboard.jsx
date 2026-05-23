@@ -19,7 +19,7 @@ const AdminDashboard = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const response = await axios.get('http://localhost:3000/api/v1/auth/admin/stats', {
+                const response = await axios.get('https://storybook-ai-bgyd.onrender.com/api/v1/auth/admin/stats', {
                     withCredentials: true
                 });
                 if (response.data.success) {

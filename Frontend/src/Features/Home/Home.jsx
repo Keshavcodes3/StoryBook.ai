@@ -18,7 +18,6 @@ const Home = () => {
             </div>
             
             <AboutSection />
-            <FeaturesBanner />
             <Footer />
         </div>
     );

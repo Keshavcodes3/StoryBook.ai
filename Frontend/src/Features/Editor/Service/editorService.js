@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:3000/api/v1/editor";
+const API_URL = "https://storybook-ai-bgyd.onrender.com/api/v1/editor";
 
 export const syncStoryContent = async (storyId, fullStoryContent, title, type) => {
     try {

@@ -28,13 +28,13 @@ const Footer = () => {
                         </p>
                         {/* Social Icons with Clean blue Hover Actions */}
                         <div className="flex gap-3">
-                            <a href="#" className="w-8 h-8 rounded-md bg-neutral-50 flex items-center justify-center text-neutral-400 hover:text-blue-500 hover:bg-blue-50 transition-all duration-200">
+                            <a href="https://x.com/_keshav2008_" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-md bg-neutral-50 flex items-center justify-center text-neutral-400 hover:text-blue-500 hover:bg-blue-50 transition-all duration-200">
                                 <FaXTwitter className="w-4 h-4" />
                             </a>
-                            <a href="#" className="w-8 h-8 rounded-md bg-neutral-50 flex items-center justify-center text-neutral-400 hover:text-blue-500 hover:bg-blue-50 transition-all duration-200">
+                            <a href="https://github.com/Keshavcodes3" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-md bg-neutral-50 flex items-center justify-center text-neutral-400 hover:text-blue-500 hover:bg-blue-50 transition-all duration-200">
                                 <FaGithub className="w-4 h-4" />
                             </a>
-                            <a href="#" className="w-8 h-8 rounded-md bg-neutral-50 flex items-center justify-center text-neutral-400 hover:text-blue-500 hover:bg-blue-50 transition-all duration-200">
+                            <a href="https://www.linkedin.com/in/keshav-chetri/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-md bg-neutral-50 flex items-center justify-center text-neutral-400 hover:text-blue-500 hover:bg-blue-50 transition-all duration-200">
                                 <FaLinkedin className="w-4 h-4" />
                             </a>
                         </div>

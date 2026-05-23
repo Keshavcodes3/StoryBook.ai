@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const API = axios.create({
-    baseURL: "http://localhost:3000/api/v1/story",
+    baseURL: "https://storybook-ai-bgyd.onrender.com/api/v1/story",
     withCredentials: true
 })
 
