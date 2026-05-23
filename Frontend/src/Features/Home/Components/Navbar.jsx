@@ -3,7 +3,7 @@ import { Feather, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Navbar = () => {
-    const navLinks = ['About'];
+    // const navLinks = ['About'];
 
     return (
         <nav className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between relative z-50">
@@ -17,14 +17,7 @@ const Navbar = () => {
                 </span>
             </Link>
 
-            {/* Desktop Links */}
-            <div className="hidden lg:flex items-center gap-8">
-                {navLinks.map((link) => (
-                    <Link key={link} to={link === 'About' ? '/#about' : `/${link.toLowerCase()}`} className="text-sm font-medium text-[#6E6B85] hover:text-[#110E2C] transition-colors">
-                        {link}
-                    </Link>
-                ))}
-            </div>
+          
 
             {/* Actions */}
             <div className="flex items-center gap-6">
