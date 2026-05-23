@@ -1,5 +1,5 @@
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
-import { createGeminiModel } from '../../config/gemini.js';
+import { invokeGemini, classifyGeminiError } from '../../config/gemini.js';
 import { getPrompt } from './prompt.js';
 import storyModel from '../Story/story.model.js';
 import poemModel from '../Poem/poem.model.js';
@@ -21,12 +21,6 @@ export const processEditorAiAction = async (req, res) => {
             activeGenre.toLowerCase().includes("poetry") ||
             activeGenre.toLowerCase().includes("verse") ||
             activeGenre.toLowerCase().includes("poem");
-
-        const editorAiEngine = createGeminiModel({
-            model: 'gemini-2.0-flash',
-            temperature: isPoetry ? 0.9 : 0.75,
-        });
-
 
         const systemInstruction = isPoetry
             ? `You are an elite, world-class poet and avant-garde literary collaborator.
@@ -51,12 +45,12 @@ export const processEditorAiAction = async (req, res) => {
         const humanInstruction = getPrompt({ actionType, fullStoryContent, textTarget, prompt });
 
 
-        const aiResponse = await editorAiEngine.invoke([
-            new SystemMessage(systemInstruction),
-            new HumanMessage(humanInstruction)
-        ]);
-
-        const finalizedAiText = aiResponse.content.trim();
+        const finalizedAiText = (
+            await invokeGemini(
+                [new SystemMessage(systemInstruction), new HumanMessage(humanInstruction)],
+                { temperature: isPoetry ? 0.9 : 0.75, maxOutputTokens: 2048 }
+            )
+        ).trim();
 
         // We do not save to DB here to avoid race conditions. 
         // The frontend will call triggerAutoSave with the new complete text.
@@ -67,18 +61,13 @@ export const processEditorAiAction = async (req, res) => {
         });
 
     } catch (err) {
-        const msg = err?.message || '';
-        const isKeyError =
-            msg.includes('API_KEY_INVALID') ||
-            msg.includes('API key not valid') ||
-            msg.includes('Gemini API key is not configured');
+        const info = classifyGeminiError(err);
+        const status = err.status || info.status || 500;
 
-        return res.status(500).json({
+        return res.status(status).json({
             success: false,
-            message: isKeyError
-                ? 'AI service is misconfigured. Set a valid GEMINI_API_KEY on the server and redeploy.'
-                : 'Internal server error',
-            error: process.env.NODE_ENV === 'production' && !isKeyError ? undefined : msg,
+            message: err.message || info.userMessage,
+            retryAfterSeconds: err.retryAfterSeconds,
         });
     }
 };

@@ -195,10 +195,14 @@ export const sendMessage = async (req, res) => {
         });
 
     } catch (err) {
-        return res.status(500).json({
+        const status = err.status || 500;
+        const isQuota = err.type === 'quota' || status === 429;
+
+        return res.status(isQuota ? 429 : status).json({
             success: false,
-            message: "Internal server error during message delivery loop.",
-            error: err?.message
+            message: err.message || 'Internal server error during message delivery loop.',
+            retryAfterSeconds: err.retryAfterSeconds,
+            ...(process.env.NODE_ENV !== 'production' && { error: err?.message }),
         });
     }
 };

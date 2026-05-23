@@ -1,6 +1,7 @@
 import { createServiceClient } from '../../../config/apiClient.js';
 
 const API = createServiceClient('/muse');
+API.defaults.timeout = 90000;
 
 export const startChat = async () => {
   const response = await API.post('/start');
@@ -13,8 +14,16 @@ export const retrieveChat = async () => {
 };
 
 export const sendMessage = async ({ text, activeMode }) => {
-  const response = await API.post('/send', { text, activeMode });
-  return response.data;
+  try {
+    const response = await API.post('/send', { text, activeMode });
+    return response.data;
+  } catch (error) {
+    const data = error.response?.data;
+    const err = new Error(data?.message || 'Failed to reach the Muse. Please try again.');
+    err.status = error.response?.status;
+    err.retryAfterSeconds = data?.retryAfterSeconds;
+    throw err;
+  }
 };
 
 export const getMemoryBank = async () => {

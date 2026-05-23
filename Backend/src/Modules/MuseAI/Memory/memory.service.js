@@ -1,5 +1,5 @@
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
-import { createGeminiModel } from '../../../config/gemini.js';
+import { invokeGemini } from '../../../config/gemini.js';
 import memoryModel from './memory.model.js';
 
 export const autoProcessAndStoreMemory = async (userId, sessionId, userMessageText) => {
@@ -24,22 +24,22 @@ export const autoProcessAndStoreMemory = async (userId, sessionId, userMessageTe
             }
         `;
 
-        const extractionModel = createGeminiModel({
-            model: 'gemini-2.0-flash',
-            temperature: 0.2,
-        });
+        const cleanContent = (
+            await invokeGemini(
+                [
+                    new SystemMessage(systemPrompt),
+                    new HumanMessage(`Analyze this user message text: "${userMessageText.slice(0, 500)}"`),
+                ],
+                { temperature: 0.2, maxOutputTokens: 512 }
+            )
+        ).trim();
 
-        const response = await extractionModel.invoke([
-            new SystemMessage(systemPrompt),
-            new HumanMessage(`Analyze this user message text: "${userMessageText}"`),
-        ]);
-
-        let cleanContent = response.content.trim();
-        if (cleanContent.startsWith('```')) {
-            cleanContent = cleanContent.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+        let jsonText = cleanContent;
+        if (jsonText.startsWith('```')) {
+            jsonText = jsonText.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
         }
 
-        const analysis = JSON.parse(cleanContent);
+        const analysis = JSON.parse(jsonText);
 
         if (!analysis.hasRelevantData || !analysis.extractedInsights?.length) {
             return { success: true, message: 'No persistent data found in this message turn.' };

@@ -1,70 +1,51 @@
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
-import { createGeminiModel } from '../../config/gemini.js';
+import { invokeGemini } from '../../config/gemini.js';
+
+const MAX_HISTORY_MESSAGES = 10;
+const MAX_CHARS_PER_MESSAGE = 2000;
 
 const Prompt = ({ mode }) => {
-    const basePersona = `You are the personal AI Muse of StoryBook.ai. You are an intuitive, supportive, yet critically sharp creative companion. Your goal is to guide the writer's voice, not overwrite it.`;
+    const basePersona =
+        'You are the Muse of StoryBook.ai — a concise, supportive writing companion. Keep replies focused (under 200 words unless analyzing prose).';
 
     switch (mode) {
         case 'prompt':
-            return `
-                ${basePersona}
-                CRITICAL INSTRUCTION: You are in CREATIVE PROVOCATION mode. 
-                Do not provide basic, generic writing ideas. Deliver a single, highly evocative literary constraint, theme, or psychological twist that forces the writer out of their comfort zone.
-                At the very end of your response, you MUST append an ambient environmental tag in this exact layout: [mood: type]
-                Select the most fitting mood type from these options: cozy-library, neon-rain, dark-gothic, cosmic-solitude.
-            `;
+            return `${basePersona} CREATIVE PROVOCATION: Give one evocative writing constraint or twist. End with [mood: cozy-library|neon-rain|dark-gothic|cosmic-solitude].`;
         case 'feedback':
-            return `
-                ${basePersona}
-                CRITICAL INSTRUCTION: You are in LITERARY MIRROR mode.
-                Analyze the user's latest written prose or concepts provided in the thread. Identify pacing drops, overused emotional crutches, or structural habits. Be direct, professional, and encouraging. Focus on artistic refinement.
-            `;
+            return `${basePersona} LITERARY MIRROR: Briefly critique pacing, tone, and habits in the user's latest text.`;
         case 'coach':
-            return `
-                ${basePersona}
-                CRITICAL INSTRUCTION: You are in WRITING COACH mode.
-                Focus heavily on technical narrative mechanics: narrative arc, character consistency, subtext, showing vs. telling, and pacing logic.
-            `;
+            return `${basePersona} WRITING COACH: Focus on arc, character, subtext, and pacing.`;
         case 'chat':
         default:
-            return `
-                ${basePersona}
-                CRITICAL INSTRUCTION: You are in STANDARD CHAT mode.
-                Act as an empathetic, collaborative soundboard. Brainstorm lore, explore character dynamics, or discuss general writer's blocks organically.
-            `;
+            return `${basePersona} STANDARD CHAT: Brainstorm ideas and help with writer's block.`;
     }
 };
 
+const trimHistory = (messages) => {
+    const recent = messages.slice(-MAX_HISTORY_MESSAGES);
+
+    return recent.map((msg) => {
+        const role = (msg.role || '').toLowerCase();
+        let text = (msg.content || msg.message || '').slice(0, MAX_CHARS_PER_MESSAGE);
+
+        if (role === 'user') return new HumanMessage(text);
+        if (role === 'system') return new SystemMessage(text);
+        if (role === 'ai' || role === 'assistant') return new AIMessage(text);
+        return new HumanMessage(text);
+    });
+};
+
 export const generateResponse = async ({ messages, mode }) => {
-    try {
-        const model = createGeminiModel({ model: 'gemini-2.0-flash' });
-        const operationalSystemInstruction = Prompt({ mode });
+    const operationalSystemInstruction = Prompt({ mode });
+    const structuredMessageHistory = trimHistory(messages);
 
-        const structuredMessageHistory = messages.map((msg) => {
-            const role = (msg.role || '').toLowerCase();
-            const text = msg.content || msg.message || '';
+    const payloadContext = [
+        new SystemMessage(operationalSystemInstruction),
+        ...structuredMessageHistory,
+    ];
 
-            if (role === 'user') {
-                return new HumanMessage(text);
-            }
-            if (role === 'system') {
-                return new SystemMessage(text);
-            }
-            if (role === 'ai' || role === 'assistant') {
-                return new AIMessage(text);
-            }
-            return new HumanMessage(text);
-        });
-
-        const payloadContext = [
-            new SystemMessage(operationalSystemInstruction),
-            ...structuredMessageHistory,
-        ];
-
-        const responseMessageInstance = await model.invoke(payloadContext);
-        return responseMessageInstance.content;
-    } catch (err) {
-        console.error('LangChain Generation Service Error:', err?.message);
-        throw err;
-    }
+    return invokeGemini(payloadContext, {
+        temperature: 0.85,
+        maxOutputTokens: 1024,
+    });
 };

@@ -151,10 +151,16 @@ const MusePage = () => {
                 };
 
                 setMessages(prev => [...prev, aiMsg]);
+            } else if (response?.message) {
+                setError(response.message);
             }
         } catch (err) {
             console.error(err);
-            setError("The Muse encountered a connection glitch. Let's try sending again.");
+            const waitHint =
+                err.retryAfterSeconds > 0
+                    ? ` Try again in about ${err.retryAfterSeconds} seconds.`
+                    : '';
+            setError(`${err.message || "The Muse couldn't respond."}${waitHint}`);
         } finally {
             setLoading(false);
         }
