@@ -58,12 +58,26 @@ export const registerUser = async (req, res) => {
   } catch (error) {
     console.error('Registration Error:', error);
 
-
     if (error.name === 'ValidationError') {
       const validationMessages = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({
         success: false,
         message: validationMessages[0],
+      });
+    }
+
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0] || 'field';
+      return res.status(409).json({
+        success: false,
+        message: `This ${field} is already registered.`,
+      });
+    }
+
+    if (error.message?.includes('JWT_SECRET')) {
+      return res.status(500).json({
+        success: false,
+        message: 'Server auth is misconfigured. Contact support.',
       });
     }
 
