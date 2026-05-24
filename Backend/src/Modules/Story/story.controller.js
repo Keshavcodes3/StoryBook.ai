@@ -4,6 +4,7 @@ import sotryModel from "./story.model.js";
 import creationModel from "./story.model.js";
 import { storyPrompt } from "./story.prompt.js";
 import { generateContent, generateTitle } from "./story.service.js";
+import { classifyGeminiError, toGeminiError } from "../../config/gemini.js";
 
 
 export const createNewContent = async (req, res) => {
@@ -97,10 +98,13 @@ export const createNewContent = async (req, res) => {
 
 
     } catch (err) {
-        return res.status(500).json({
-            message: err?.message,
-            success: false
-        })
+        const geminiErr = err?.type ? err : toGeminiError(err);
+        const info = classifyGeminiError(geminiErr);
+        return res.status(geminiErr.status || info.status || 500).json({
+            message: geminiErr.message || info.userMessage,
+            success: false,
+            retryAfterSeconds: geminiErr.retryAfterSeconds,
+        });
     }
 }
 
