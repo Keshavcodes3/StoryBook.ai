@@ -1,6 +1,6 @@
-import { createServiceClient } from '../../../config/apiClient.js';
+import { AI_REQUEST_TIMEOUT_MS, createServiceClient } from '../../../config/apiClient.js';
 
-const API = createServiceClient('/editor');
+const API = createServiceClient('/editor', { timeout: AI_REQUEST_TIMEOUT_MS });
 
 export const syncStoryContent = async (storyId, fullStoryContent, title, type) => {
   try {

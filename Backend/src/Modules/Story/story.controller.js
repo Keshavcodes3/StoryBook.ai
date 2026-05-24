@@ -23,12 +23,10 @@ export const createNewContent = async (req, res) => {
                 message: 'You have exhausted your generation credits. Please upgrade to Premium or wait for your monthly refresh.',
             });
         }
-        const response = await generateContent({
-            format, mood, genre, userPrompt
-        })
-        const title = await generateTitle({
-            format, mood, genre, userPrompt
-        })
+        const [response, title] = await Promise.all([
+            generateContent({ format, mood, genre, userPrompt }),
+            generateTitle({ format, mood, genre, userPrompt }),
+        ]);
         let creation;
         if (String(format).toLowerCase() === 'story') {
             creation = await sotryModel.create({
@@ -181,10 +179,13 @@ export const followUpStory = async (req, res) => {
             creditsRemaining: updatedUser.generationCredits
         });
     } catch (err) {
-        return res.status(500).json({
-            message: err?.message,
-            success: false
-        })
+        const geminiErr = err?.type ? err : toGeminiError(err);
+        const info = classifyGeminiError(geminiErr);
+        return res.status(geminiErr.status || info.status || 500).json({
+            message: geminiErr.message || info.userMessage,
+            success: false,
+            retryAfterSeconds: geminiErr.retryAfterSeconds,
+        });
     }
 }
 

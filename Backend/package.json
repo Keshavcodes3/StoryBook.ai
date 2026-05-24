@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "test:gemini": "node scripts/test-gemini.mjs",
     "dev": "npx tsx watch server.js"
   },
   "keywords": [],

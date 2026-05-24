@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './src/config/env.js';
 
 import app from './src/App.js';
 import { connectToDB } from './src/config/database.js';
@@ -9,10 +9,10 @@ const PORT = process.env.PORT || 3000;
 const geminiKeys = getGeminiApiKeys();
 if (geminiKeys.length === 0) {
     console.warn(
-        'WARNING: No Gemini API key found. Set GEMINI_API_KEY (or GOOGLE_API_KEY / MuseApiKey) in environment variables.'
+        'WARNING: No valid Gemini API key. Create one at https://aistudio.google.com/apikey and set GEMINI_API_KEY on Render.'
     );
 } else {
-    console.log(`Gemini: ${geminiKeys.length} API key(s) loaded; models: ${getModelFallbacks().join(' → ')}`);
+    console.log(`Gemini: ${geminiKeys.length} key(s); models: ${getModelFallbacks().join(' → ')}`);
 }
 
 connectToDB();

@@ -1,13 +1,14 @@
+import './config/env.js';
+
+
 import express from 'express';
 import mongoose from 'mongoose';
 import multer from 'multer';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
 import cookie from 'cookie-parser';
 import bcrypt from 'bcryptjs';
 import morgan from 'morgan'
-dotenv.config();
 const app = express();
 const allowedOrigins = [
     ...new Set([

@@ -57,7 +57,12 @@ export const useChoose = () => {
             
             return creation
         } catch (err) {
-            const errorMsg = err?.response?.data?.message || err.message || "Failed to generate content."
+            const errorMsg =
+                err?.response?.data?.message ||
+                (err?.code === 'ECONNABORTED'
+                    ? 'Generation timed out. The server may be waking up — wait a moment and try again.'
+                    : err.message) ||
+                'Failed to generate content.';
             dispatch(setError(errorMsg))
             throw err
         } finally {
@@ -80,7 +85,12 @@ export const useChoose = () => {
             
             return updatedCreation
         } catch (err) {
-            const errorMsg = err?.response?.data?.message || err.message || "Failed to refine content."
+            const errorMsg =
+                err?.response?.data?.message ||
+                (err?.code === 'ECONNABORTED'
+                    ? 'Refinement timed out. Try again in a moment.'
+                    : err.message) ||
+                'Failed to refine content.';
             dispatch(setError(errorMsg))
             throw err
         } finally {

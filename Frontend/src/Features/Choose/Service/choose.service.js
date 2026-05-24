@@ -1,6 +1,6 @@
-import { createServiceClient } from '../../../config/apiClient.js';
+import { AI_REQUEST_TIMEOUT_MS, createServiceClient } from '../../../config/apiClient.js';
 
-const API = createServiceClient('/story');
+const API = createServiceClient('/story', { timeout: AI_REQUEST_TIMEOUT_MS });
 
 export const createNewContent = async (Data) => {
   const response = await API.post('/create', Data);

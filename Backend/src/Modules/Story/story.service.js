@@ -10,7 +10,7 @@ export const generateContent = async ({ format, mood, genre, userPrompt }) => {
 
     return invokeGemini([new HumanMessage(compiledPrompt)], {
         temperature: 0.83,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 2048,
     });
 };
 

@@ -4,11 +4,13 @@ import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 const ENV_KEYS = [
     'GEMINI_API_KEY',
     'GOOGLE_API_KEY',
-    'MuseApiKey',
-    'MUSE_API_KEY',
 ];
 
-/** Models that support generateContent for most API keys (newest first). */
+/** Google AI Studio keys always start with AIza */
+const GOOGLE_API_KEY_PATTERN = /^AIza[0-9A-Za-z_-]{30,}$/;
+
+const DEFAULT_INVOKE_TIMEOUT_MS = 55_000;
+
 const DEFAULT_MODEL_FALLBACKS = [
     'gemini-2.5-flash',
     'gemini-2.0-flash',
@@ -20,16 +22,26 @@ const cleanEnvValue = (raw) => {
     return raw.trim().replace(/^['"]|['"]$/g, '');
 };
 
+export const isValidGoogleApiKeyFormat = (key) =>
+    typeof key === 'string' && GOOGLE_API_KEY_PATTERN.test(key.trim());
+
 export const getGeminiApiKeys = () => {
     const keys = [];
     const seen = new Set();
 
     for (const name of ENV_KEYS) {
         const key = cleanEnvValue(process.env[name]);
-        if (key && !seen.has(key)) {
-            seen.add(key);
-            keys.push(key);
+        if (!key || seen.has(key)) continue;
+
+        if (!isValidGoogleApiKeyFormat(key)) {
+            console.warn(
+                `[Gemini] Skipping ${name}: not a valid Google API key (expected AIza... from aistudio.google.com/apikey)`
+            );
+            continue;
         }
+
+        seen.add(key);
+        keys.push(key);
     }
 
     return keys;
@@ -93,7 +105,9 @@ export const classifyGeminiError = (err) => {
     if (
         msg.includes('API_KEY_INVALID') ||
         msg.includes('API key not valid') ||
-        msg.includes('API key expired')
+        msg.includes('API key expired') ||
+        msg.includes('API Key not found') ||
+        msg.includes('API key not found')
     ) {
         return {
             type: 'auth',
@@ -181,15 +195,28 @@ const shouldTryNextModel = (type) => type === 'quota' || type === 'model';
 
 const shouldTryNextKey = (type) => type === 'auth';
 
+const withTimeout = (promise, ms, label = 'Gemini request') =>
+    Promise.race([
+        promise,
+        new Promise((_, reject) => {
+            setTimeout(() => reject(new Error(`ETIMEDOUT: ${label} exceeded ${ms}ms`)), ms);
+        }),
+    ]);
+
 /**
  * Invoke Gemini with API-key fallbacks and model fallbacks.
  */
 export const invokeGemini = async (messages, options = {}) => {
     const apiKeys = options.apiKeys || getGeminiApiKeys();
     const models = options.models || getModelFallbacks();
+    const timeoutMs = options.timeoutMs ?? DEFAULT_INVOKE_TIMEOUT_MS;
 
     if (apiKeys.length === 0) {
-        throw toGeminiError(new Error('Gemini API key is not configured'));
+        throw toGeminiError(
+            new Error(
+                'Gemini API key is not configured. Set GEMINI_API_KEY from https://aistudio.google.com/apikey'
+            )
+        );
     }
 
     let lastError;
@@ -203,7 +230,11 @@ export const invokeGemini = async (messages, options = {}) => {
                     temperature: options.temperature ?? 0.8,
                     maxOutputTokens: options.maxOutputTokens ?? 2048,
                 });
-                const response = await client.invoke(messages);
+                const response = await withTimeout(
+                    client.invoke(messages),
+                    timeoutMs,
+                    `model ${model}`
+                );
                 return normalizeGeminiContent(response.content);
             } catch (err) {
                 lastError = err;

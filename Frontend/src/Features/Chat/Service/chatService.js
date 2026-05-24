@@ -1,7 +1,6 @@
-import { createServiceClient } from '../../../config/apiClient.js';
+import { AI_REQUEST_TIMEOUT_MS, createServiceClient } from '../../../config/apiClient.js';
 
-const API = createServiceClient('/muse');
-API.defaults.timeout = 90000;
+const API = createServiceClient('/muse', { timeout: AI_REQUEST_TIMEOUT_MS });
 
 export const startChat = async () => {
   const response = await API.post('/start');
