@@ -6,11 +6,13 @@ import DailyPrompt from '../Components/DailyPrompt';
 import RecentWorks from '../Components/RecentWorks';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchTotalStats, fetchRecentWorks } from '../../Stories/Redux/stories.slice';
+import { getPersonalizedGreeting } from '../../../utils/greeting';
 
 const DashboardHome = () => {
     const navigate = useNavigate();
-    const { user } = useSelector((state) => state.auth)
-    const userProfile = { name: user?.name || "Keshav" };
+    const { user } = useSelector((state) => state.auth);
+    const displayName = user?.name || user?.username || 'there';
+    const greeting = getPersonalizedGreeting(displayName);
 
     const { totalStats, recentWorks } = useSelector(state => state.stories);
     const dispatch = useDispatch();
@@ -65,7 +67,7 @@ const DashboardHome = () => {
             {/* Welcome User Core Frame Banner */}
             <motion.div variants={itemVariants}>
                 <h1 className="text-2xl font-bold tracking-tight text-[#110E2C] mb-1">
-                    Good evening, {userProfile.name}
+                    {greeting}
                 </h1>
                 <p className="text-sm text-[#6E6B85] font-medium tracking-wide">
                     Let's write something beautiful today.
